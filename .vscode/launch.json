@@ -1,0 +1,11 @@
+{
+  "name": "FastAPI: app.main",
+  "type": "python",
+  "request": "launch",
+  "module": "uvicorn",
+  "args": [
+    "app.main:app",
+    "--reload"
+  ],
+  "jinja": true
+}

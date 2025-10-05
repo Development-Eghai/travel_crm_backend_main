@@ -1,0 +1,848 @@
+{
+	"info": {
+		"_postman_id": "a24b2e0c-de8c-439a-a523-3ccf59d9ae18",
+		"name": "Travel crm",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "45536410",
+		"_collection_link": "https://anand-5055803.postman.co/workspace/Anand's-Workspace~6fc1d930-99bd-48fe-8909-8ecb6b6ffa0c/collection/45536410-a24b2e0c-de8c-439a-a523-3ccf59d9ae18?action=share&source=collection_link&creator=45536410"
+	},
+	"item": [
+		{
+			"name": "create user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\": \"anand_dev\",\r\n  \"email\": \"anand@example.com\",\r\n  \"first_name\": \"Anand\",\r\n  \"last_name\": \"Dev\",\r\n  \"mobile_number\": \"9876543210\",\r\n  \"password\": \"securepass123\",\r\n  \"role\": \"Admin\",\r\n  \"send_user_email\": false,\r\n  \"tenant_id\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/public/api/users",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"public",
+						"api",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create trip",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"title\": \"Himalayan Adventure\",\r\n  \"overview\": \"Explore the majestic Himalayashgggggggg\",\r\n  \"destination_id\": 2,\r\n  \"trip_model\": \"Fixed\",\r\n  \"trip_type_id\": 1,\r\n  \"category_ids\": [3, 5],\r\n  \"hotel_category\": \"3-Star\",\r\n  \"price\": 12999.00,\r\n  \"original_price\": 14999.00,\r\n  \"pickup_location\": \"Delhi Airport\",\r\n  \"drop_location\": \"Delhi Airport\",\r\n  \"fixed_slots\": [\r\n    { \"start_date\": \"2025-10-01\", \"end_date\": \"2025-10-07\" },\r\n    { \"start_date\": \"2025-11-15\", \"end_date\": \"2025-11-21\" }\r\n  ],\r\n  \"tenant_id\": 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/trips/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"trips",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create destination",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Goa\",\r\n  \"slug\": \"goaaaa\",\r\n  \"hero_image\": \"https://example.com/goa.jpg\",\r\n  \"description\": \"Beach paradise\",\r\n  \"parent_id\": null,\r\n  \"destination_type\": \"Domestic\",\r\n  \"popular_trip_ids\": [101, 102],\r\n  \"blog_category_ids\": [5, 6],\r\n  \"featured_blog_ids\": [201],\r\n  \"about\": \"Known for beaches and nightlife\",\r\n  \"how_to_reach\": \"Fly to Goa International Airport\",\r\n  \"activity_ids\": [301, 302],\r\n  \"travel_guide_tips\": \"Pack sunscreen and swimwear\",\r\n  \"tenant_id\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/destinations/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"destinations",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create activity",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"River Raftingsfsdfvsd\",\r\n  \"slug\": \"river-rafting\",\r\n  \"description\": \"Thrilling white-water adventure\",\r\n  \"image\": \"https://cdn.example.com/rafting.jpg\",\r\n  \"tenant_id\": 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/activities/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"activities",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create trip type",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Adventurefuiuy\",\r\n  \"slug\": \"adventure\",\r\n  \"description\": \"Trips focused on outdoor and thrill activities\",\r\n  \"image\": \"https://cdn.example.com/adventure.jpg\",\r\n  \"tenant_id\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/trip-types/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"trip-types",
+						""
+					],
+					"query": [
+						{
+							"key": "x-api-key",
+							"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create lead",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Aarav Mehta\",\r\n  \"email\": \"aarav@example.com\",\r\n  \"mobile\": \"9876543210\",\r\n  \"trip_type_id\": 1,\r\n  \"destination_id\": 1,\r\n  \"pickup_location\": \"Mumbai\",\r\n  \"drop_location\": \"Leh\",\r\n  \"travel_date_from\": \"2025-09-10\",\r\n  \"travel_date_to\": \"2025-09-15\",\r\n  \"adults\": 2,\r\n  \"children\": 1,\r\n  \"assigned_to\": 3,\r\n  \"follow_up_date\": \"2025-08-25\",\r\n  \"follow_up_time\": \"14:30:00\",\r\n  \"notes\": \"Interested in Ladakh adventure\",\r\n  \"status\": \"new\",\r\n  \"tenant_id\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/leads/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"leads",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "lead-comments",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"lead_id\": 2,\r\n  \"comment\": \"Customer requested Ladakh itinerary with hotel upgrade.\",\r\n  \"commented_by\": 4\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/lead-comments/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"lead-comments",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "quotation",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"lead_id\": 2,\r\n  \"template_name\": \"Ladakh Adventure\",\r\n  \"trip_details\": \"7-day itinerary with hotel upgrades\",\r\n  \"itenary\": { \"day1\": \"Arrival\", \"day2\": \"Leh sightseeing\" },\r\n  \"hotels\": { \"Leh\": \"Hotel Grand Dragon\", \"Nubra\": \"Desert Camp\" },\r\n  \"transport\": { \"type\": \"SUV\", \"provider\": \"Local Tours\" },\r\n  \"cost_breakdown\": { \"base\": 45000, \"tax\": 5400, \"total\": 50400 },\r\n  \"terms\": \"Prices subject to change\",\r\n  \"payment_policy\": \"50% advance\",\r\n  \"cancellation_policy\": \"Full refund before 7 days\",\r\n  \"tenant_id\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/quotation/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"quotation",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "categories",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Adventuredcc\",\r\n  \"slug\": \"adventure\",\r\n  \"description\": \"Trips focused on thrill and outdoor activities\",\r\n  \"image\": \"https://cdn.example.com/adventure.jpg\",\r\n  \"tenant_id\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/categories/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"categories",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bookings",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"customer_name\": \"Ananya Rao\",\r\n  \"trip_id\": 4,\r\n  \"booking_type\": \"Fixed Departure\",\r\n  \"booking_status\": \"Confirmed\",\r\n  \"payment_status\": \"Paid\",\r\n  \"tenant_id\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/bookings/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"bookings",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "trip-days itenary",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"trip_id\": 4,\r\n  \"day_title\": \"Day 2 - Adventure Trek\",\r\n  \"image_url\": \"https://cdn.example.com/day2.jpg\",\r\n  \"description\": \"Morning trek followed by river rafting.\",\r\n  \"activity_ids\": [1],\r\n  \"accommodation\": \"Mountain Lodge\",\r\n  \"tenant_id\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/trip-days/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"trip-days",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "fixed-departures",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"trip_id\": 1,\r\n  \"title\": \"WanderOn Himalayan Escape\",\r\n  \"start_date\": \"2025-09-15T10:00:00\",\r\n  \"end_date\": \"2025-09-20T18:00:00\",\r\n  \"description\": \"A 6-day fixed departure to the Himalayas\",\r\n  \"tenant_id\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/fixed-departures/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"fixed-departures",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "lead-assignments",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"lead_id\": 1,\r\n  \"assigned_to\": 1,\r\n  \"due_date\": \"2025-08-26\",\r\n  \"priority\": \"High\",\r\n  \"follow_up_date\": \"2025-08-25\",\r\n  \"comments\": \"Call after 10 AM. Interested in Ladakh trip.\",\r\n  \"tenant_id\": 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/lead-assignments/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"lead-assignments",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "task",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"title\": \"Call client for itinerary confirmation\",\r\n  \"priority\": \"High\",\r\n  \"description\": \"Confirm travel dates and send updated quotation\",\r\n  \"assigned_to\": 1,\r\n  \"due_date\": \"2025-08-24\",\r\n  \"status\": \"Pending\",\r\n  \"tenant_id\": 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/task/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"task",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "roles",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Sales Agent\",\r\n  \"modules\": {\r\n    \"leads\": true,\r\n    \"bookings\": true,\r\n    \"quotations\": false,\r\n    \"comments\": true\r\n  },\r\n  \"tenant_id\": 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/roles/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"roles",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "site-settings",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"site_title\": \"WanderPro CRM\",\r\n  \"company_name\": \"WanderPro Pvt Ltd\",\r\n  \"site_description\": \"Your travel CRM for leads, bookings, and blogs\",\r\n  \"logo_url\": \"https://cdn.wanderpro.com/logo.png\",\r\n  \"favicon_url\": \"https://cdn.wanderpro.com/favicon.ico\",\r\n  \"contact_email\": \"support@wanderpro.com\",\r\n  \"phone_numbers\": {\r\n    \"support\": \"+91-9876543210\",\r\n    \"sales\": \"+91-9123456780\"\r\n  },\r\n  \"business_address\": \"123, MG Road, Bengaluru\",\r\n  \"tenant_id\": 1,\r\n  \"is_active\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/site-settings/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"site-settings",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "activity-types",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Adventure\",\r\n  \"description\": \"High-energy activities like trekking, rafting, and ziplining\",\r\n  \"icon_url\": \"https://cdn.wanderpro.com/icons/adventure.png\",\r\n  \"tenant_id\": 1,\r\n  \"is_active\": true\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/activity-types/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"activity-types",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "blog-posts",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"heading\": \"Top 10 Beaches in South India\",\r\n  \"category_id\": 3,\r\n  \"featured_image\": \"https://cdn.wanderpro.com/blogs/beaches.jpg\",\r\n  \"alt_tag\": \"Sunset at Kovalam Beach\",\r\n  \"date\": \"2025-08-22\",\r\n  \"author_name\": \"Anand\",\r\n  \"tag_ids\": [1, 5, 9],\r\n  \"is_featured\": true,\r\n  \"is_published\": true,\r\n  \"description\": \"Explore the most serene and scenic beaches across Tamil Nadu and Kerala.\",\r\n  \"meta_title\": \"Best Beaches in South India\",\r\n  \"meta_tag\": \"beach, travel, south india\",\r\n  \"meta_description\": \"A curated list of top beach destinations for your next coastal getaway.\",\r\n  \"slug\": \"best-beaches-south-india\",\r\n  \"tenant_id\": 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/blog-posts/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"blog-posts",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "tags",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Beach2\",\r\n  \"slug\": \"Beach2\",\r\n  \"description\": \"All beach-related content and destinations\",\r\n  \"tenant_id\": 1,\r\n  \"is_active\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/tags/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"tags",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "blog-categories",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Adventure\",\r\n  \"slug\": \"adventure\",\r\n  \"description\": \"Outdoor and thrill-seeking travel blogs\",\r\n  \"image_url\": \"https://cdn.wanderpro.com/images/adventure.jpg\",\r\n  \"parent_id\": 1,\r\n  \"tenant_id\": 1,\r\n  \"is_active\": true,\r\n  \"sort_order\": 1,\r\n  \"level\": 0\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/blog-categories/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"blog-categories",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "quotation-items",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "bS8WV0lnLRutJH-NbUlYrO003q30b_f8B4VGYy9g45M",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"quotation_id\": 1,\r\n  \"title\": \"5N Stay at Manali Resort\",\r\n  \"description\": \"Includes breakfast and mountain view room\",\r\n  \"quantity\": 1,\r\n  \"unit_price\": 18500.00,\r\n  \"total_price\": 18500.00,\r\n  \"sort_order\": 1,\r\n  \"tenant_id\": 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/secure/api/quotation-items/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"secure",
+						"api",
+						"quotation-items",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
