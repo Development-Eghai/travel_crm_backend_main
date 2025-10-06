@@ -85,6 +85,6 @@ except Exception as e:
 
 @app.get("/")
 def gateway_root():
-    return {"msg": "Travel CRM Gateway is live in Hostinger"}
+    return {"msg": "Travel CRM Gateway is live with the UPDATED GIT version in hostinger"}
 
 print("✅ Travel CRM Gateway is running")
