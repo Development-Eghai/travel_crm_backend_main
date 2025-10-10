@@ -2,6 +2,8 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from datetime import datetime
 from core.database import Base
+from sqlalchemy.orm import relationship
+
 
 class Category(Base):
     __tablename__ = "categories"
@@ -14,3 +16,5 @@ class Category(Base):
     tenant_id = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=datetime.now())
     updated_at = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
+
+    trips = relationship("Trip", back_populates="category")
