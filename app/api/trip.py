@@ -47,7 +47,8 @@ def get_trip_by_id_endpoint(trip_id: int, db: Session = Depends(get_db)) -> dict
 def create_trip_endpoint(trip: TripCreate, db: Session = Depends(get_db)) -> dict:
     try:
         new_trip = create_trip(db, trip)
-        return api_json_response_format(True, "Trip created successfully", 0, serialize_trip(new_trip))
+        data = serialize_trip(new_trip)
+        return api_json_response_format(True, "Trip created successfully", 0, data)
     except Exception as e:
         return api_json_response_format(False, str(e), 500, None)
 
