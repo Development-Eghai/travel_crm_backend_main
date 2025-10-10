@@ -88,7 +88,3 @@ def gateway_root():
     return {"msg": "Travel CRM Gateway is live with the UPDATED GIT version in hostinger"}
 
 print("✅ Travel CRM Gateway is running")
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:secure_app", host="127.0.0.1", port=8001, reload=True)
