@@ -26,7 +26,7 @@ def create_trip(db: Session, payload: TripCreate):
 
     # Prepare base trip data
     trip_fields = payload.dict(exclude={"media", "pricing", "policies", "itinerary"})
-    trip_fields["categories"] = ",".join(payload.categories or [])
+    trip_fields["category_id"] = payload.category_id or None
     trip_fields["themes"] = ",".join(payload.themes or [])
 
     # Create Trip model instance
@@ -104,7 +104,7 @@ def update_trip(db: Session, trip_id: int, payload: TripCreate):
     for key, value in trip_fields.items():
         setattr(trip_model, key, value)
 
-    trip_model.categories = ",".join(payload.categories or [])
+    trip_model.category_id = payload.category_id or None
     trip_model.themes = ",".join(payload.themes or [])
     trip_model.slug = payload.slug
 
@@ -177,7 +177,7 @@ def serialize_trip(trip: Trip) -> dict:
         "overview": trip.overview,
         "destination_id": trip.destination_id,
         "destination_type": trip.destination_type,
-        "categories": trip.categories.split(",") if trip.categories else [],
+        "category_id": trip.category_id,
         "themes": trip.themes.split(",") if trip.themes else [],
         "hotel_category": trip.hotel_category,
         "pickup_location": trip.pickup_location,

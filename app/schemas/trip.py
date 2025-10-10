@@ -66,8 +66,8 @@ class TripCreate(BaseModel):
     overview: Optional[str]
     destination_id: int
     destination_type: str
-    categories: List[str]
-    themes: List[str]
+    category_id: Optional[int]
+    themes: Optional[List[str]] = []
     hotel_category: Optional[int]
     pickup_location: Optional[str]
     drop_location: Optional[str]
@@ -79,7 +79,7 @@ class TripCreate(BaseModel):
     highlights: Optional[str]
     inclusions: Optional[str]
     exclusions: Optional[str]
-    faqs: Optional[str]
+    faqs: Optional[dict] = None
     terms: Optional[str]
     privacy_policy: Optional[str]
     payment_terms: Optional[str]
@@ -96,8 +96,9 @@ class TripOut(BaseModel):
     overview: Optional[str]
     destination_id: int
     destination_type: str
-    categories: List[str]
-    themes: List[str]
+    category_id: Optional[int]
+    # category: Optional[str] = None
+    themes: Optional[List[str]] = []
     hotel_category: Optional[int]
     pickup_location: Optional[str]
     drop_location: Optional[str]
@@ -109,7 +110,7 @@ class TripOut(BaseModel):
     highlights: Optional[str]
     inclusions: Optional[str]
     exclusions: Optional[str]
-    faqs: Optional[str]
+    faqs: Optional[dict] = None
     terms: Optional[str]
     privacy_policy: Optional[str]
     payment_terms: Optional[str]

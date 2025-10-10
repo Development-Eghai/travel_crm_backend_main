@@ -4,7 +4,11 @@ from typing import List
 from schemas.category import CategoryCreate, CategoryOut
 from models.category import Category
 from core.database import get_db
+from starlette.responses import JSONResponse
 from utils.response import api_json_response_format  # Adjust path if needed
+from models.trip import Trip
+from schemas.trip import TripOut
+from crud.trip import serialize_trip
 
 router = APIRouter()
 
@@ -63,3 +67,12 @@ def delete_category(category_id: int, db: Session = Depends(get_db)):
         return api_json_response_format(True, "Category deleted successfully.", 200, {})
     except Exception as e:
         return api_json_response_format(False, f"Error deleting category: {e}", 500, {})
+
+@router.get("/trip_details/{category_id}")
+def get_trip_details(category_id: int, db: Session = Depends(get_db)):
+    try:
+        trip_details = db.query(Trip).filter(Trip.category_id == category_id).all()
+        data = [serialize_trip(t) for t in trip_details]
+        return api_json_response_format(True, "Trip details retrieved successfully.", 200, data)
+    except Exception as e:
+        return api_json_response_format(False, f"Error retrieving trip details: {e}", 500, {})
