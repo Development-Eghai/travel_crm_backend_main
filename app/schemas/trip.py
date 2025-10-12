@@ -40,15 +40,26 @@ class FixedDeparture(BaseModel):
     booking_amount: float
     gst_percentage: float
 
+class customized(BaseModel):
+    pricing_type: str
+    base_price: float
+    discount: float
+    final_price: float
+
+class customizedOut(BaseModel):
+    pass
+
 class FixedDepartureOut(FixedDeparture):
     pass
 
 class TripPricingSchema(BaseModel):
     pricing_model: str
     fixed_departure: List[FixedDeparture]
+    customized: List[customized]
 
 class TripPricingOut(TripPricingSchema):
     fixed_departure: List[FixedDepartureOut]
+    customized: List[customizedOut]
 
 # -------------------- Policies --------------------
 
@@ -79,7 +90,7 @@ class TripCreate(BaseModel):
     highlights: Optional[str]
     inclusions: Optional[str]
     exclusions: Optional[str]
-    faqs: Optional[dict] = None
+    faqs: Optional[list[dict]] = None
     terms: Optional[str]
     privacy_policy: Optional[str]
     payment_terms: Optional[str]
