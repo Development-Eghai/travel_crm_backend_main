@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api import trip_management
 from api import invoice
+from api.view_enquireform import enquire_router
 from core.security import verify_api_key
 from api.user import user_router
 from api import (
@@ -72,6 +73,7 @@ public_app.add_middleware(
 )
 
 public_app.include_router(user_router, prefix="/api/users", tags=["Users"])
+public_app.include_router(enquire_router,prefix="/api/enquires", tags=["Enquires"])
 
 try:
     # 🧬 Mount both apps
@@ -87,4 +89,3 @@ except Exception as e:
 def gateway_root():
     return {"msg": "Travel CRM Gateway is live with the UPDATED GIT version in hostinger"}
 
-print("✅ Travel CRM Gateway is running")
