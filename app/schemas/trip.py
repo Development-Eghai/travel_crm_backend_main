@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import List, Optional
+from pydantic import BaseModel, model_validator
+from typing import List, Optional, Literal
 from datetime import datetime
 
 # -------------------- Itinerary --------------------
@@ -40,7 +40,7 @@ class FixedDeparture(BaseModel):
     booking_amount: float
     gst_percentage: float
 
-class customized(BaseModel):
+class CustomizedPricing(BaseModel):
     pricing_type: str
     base_price: float
     discount: float
@@ -53,10 +53,28 @@ class FixedDepartureOut(FixedDeparture):
     pass
 
 class TripPricingSchema(BaseModel):
-    pricing_model: str
+    pricing_model: Literal["fixed_departure", "customized"]
     fixed_departure: Optional[List[FixedDeparture]] = None
-    customized: Optional[List[customized]] = None
+    customized: Optional[List[CustomizedPricing]] = None  # ← updated type
 
+    @model_validator(mode="after")
+    def check_pricing_fields(cls, model_instance: "TripPricingSchema") -> "TripPricingSchema":
+        """
+        Ensure only the relevant field is populated based on pricing_model.
+        In Pydantic v2, this receives the instance, not a dict.
+        """
+        if model_instance.pricing_model == "fixed_departure":
+            if not model_instance.fixed_departure or len(model_instance.fixed_departure) == 0:
+                raise ValueError("fixed_departure is required when pricing_model='fixed_departure'")
+            # Ignore customized
+            model_instance.customized = None
+        elif model_instance.pricing_model == "customized":
+            if not model_instance.customized or len(model_instance.customized) == 0:
+                raise ValueError("customized is required when pricing_model='customized'")
+            # Ignore fixed_departure
+            model_instance.fixed_departure = None
+
+        return model_instance
 class TripPricingOut(TripPricingSchema):
     fixed_departure: List[FixedDepartureOut]
     customized: List[customizedOut]

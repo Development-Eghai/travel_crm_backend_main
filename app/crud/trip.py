@@ -69,7 +69,7 @@ def create_trip(db: Session, payload: TripCreate):
         media_data = payload.media.dict() if hasattr(payload.media, "dict") else payload.media
         media_data["hero_image_url"] = generate_image(media_data["hero_image_url"])
         media_data["thumbnail_url"] = generate_image(media_data["thumbnail_url"])
-        gallery_url = media_data["gallery_url"]
+        gallery_url = media_data["gallery_urls"]
         urls = []
         for url in gallery_url:
             urls.append(generate_image(url))
