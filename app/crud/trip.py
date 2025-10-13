@@ -1,4 +1,9 @@
+import base64
+import os
+from datetime import datetime
+import io
 import json
+from PIL import Image
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from models.trip import Itinerary, Trip, TripMedia, TripPolicy, TripPricing
@@ -7,6 +12,8 @@ from fastapi import HTTPException
 import uuid
 
 # -------------------- Slug Generator --------------------
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def generate_unique_slug(db: Session, base_slug: str) -> str:
     existing = db.query(Trip).filter(Trip.slug == base_slug).first()
@@ -14,6 +21,28 @@ def generate_unique_slug(db: Session, base_slug: str) -> str:
         return base_slug
     return f"{base_slug}-{uuid.uuid4().hex[:6]}"
 
+def generate_image(image_input):
+    """
+    Accepts either Base64 string or bytes.
+    Saves the image as .webp and returns the file path.
+    """
+    if isinstance(image_input, str):
+        if image_input.startswith("data:image"):
+            image_input = image_input.split(",")[1]
+        image_data = base64.b64decode(image_input)
+    elif isinstance(image_input, (bytes, bytearray)):
+        image_data = image_input
+    else:
+        raise ValueError("Invalid image input type. Must be base64 string or bytes.")
+
+    image = Image.open(io.BytesIO(image_data))
+
+    file_name = f"{datetime.now().strftime('%Y%m%d%H%M%S')}.webp"
+    file_path = os.path.join(UPLOAD_DIR, file_name)
+
+    image.save(file_path, format="WEBP", quality=85)
+
+    return file_path
 # -------------------- Create --------------------
 
 
@@ -38,7 +67,13 @@ def create_trip(db: Session, payload: TripCreate):
     # Add Media
     if payload.media:
         media_data = payload.media.dict() if hasattr(payload.media, "dict") else payload.media
-        media_data["gallery_urls"] = ",".join(media_data.get("gallery_urls", []))  # ✅ flatten list
+        media_data["hero_image_url"] = generate_image(media_data["hero_image_url"])
+        media_data["thumbnail_url"] = generate_image(media_data["thumbnail_url"])
+        gallery_url = media_data["gallery_url"]
+        urls = []
+        for url in gallery_url:
+            urls.append(generate_image(url))
+        media_data["gallery_urls"] = urls
         media_model = TripMedia(trip_id=trip_model.id, **media_data)
         db.add(media_model)
 
