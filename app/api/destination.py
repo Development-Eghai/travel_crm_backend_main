@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from schemas.destination import DestinationCreate, DestinationOut
 from models.destination import (
@@ -7,6 +9,8 @@ from models.destination import (
 )
 from core.database import get_db
 from utils.response import api_json_response_format
+
+from models.trip import Trip
 
 router = APIRouter()
 
@@ -85,7 +89,17 @@ def create_destination(destination_in: DestinationCreate, db: Session = Depends(
 
     except Exception as e:
         return api_json_response_format(False, f"Error creating destination: {e}", 500, {})
-    
+@router.get("/get_trips")
+def get_trips(trip_ids: List[int] = Query(...), db: Session = Depends(get_db)):
+    if not trip_ids:
+        raise HTTPException(status_code=400, detail="trip_ids list cannot be empty")
+
+    trips = db.query(Trip).filter(Trip.id.in_(trip_ids)).all()
+
+    if not trips:
+        raise HTTPException(status_code=404, detail="No trips found for the given IDs")
+
+    return trips
 
 @router.get("/{destination_id}")
 def get_destination_by_id(destination_id: int, db: Session = Depends(get_db)):
