@@ -54,8 +54,8 @@ class FixedDepartureOut(FixedDeparture):
 
 class TripPricingSchema(BaseModel):
     pricing_model: str
-    fixed_departure: List[FixedDeparture]
-    customized: List[customized]
+    fixed_departure: Optional[List[FixedDeparture]] = None
+    customized: Optional[List[customized]] = None
 
 class TripPricingOut(TripPricingSchema):
     fixed_departure: List[FixedDepartureOut]
