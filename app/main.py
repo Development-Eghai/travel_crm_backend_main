@@ -139,8 +139,8 @@ def upload_image(image: UploadFile = File(...)):
 
     image_url = f"{IMG_URL}/{image.filename}"
     print(image_url)
-    return trip.api_json_response_format(True, "Trips fetched successfully", 0, {})
-    # return JSONResponse(status_code=200, content={"message": "Upload successful", "url": image_url})
+    # return trip.api_json_response_format(True, "Trips fetched successfully", 0, {})
+    return JSONResponse(status_code=200, content={"message": "Upload successful", "url": image_url})
 
 @app.post("/multiple")
 def upload_gallery_images(gallery_images: List[UploadFile] = File(...), request: Request = None):
