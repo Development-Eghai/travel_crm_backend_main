@@ -1,5 +1,6 @@
 from typing import List
 
+from crud.trip import serialize_trip
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from schemas.destination import DestinationCreate, DestinationOut
@@ -89,6 +90,7 @@ def create_destination(destination_in: DestinationCreate, db: Session = Depends(
 
     except Exception as e:
         return api_json_response_format(False, f"Error creating destination: {e}", 500, {})
+    
 @router.get("/get_trips")
 def get_trips(trip_ids: List[int] = Query(...), db: Session = Depends(get_db)):
     if not trip_ids:
@@ -108,6 +110,28 @@ def get_destination_by_id(destination_id: int, db: Session = Depends(get_db)):
         if not destination:
             return api_json_response_format(False, "Destination not found", 404, {})
 
+        # ✅ Hydrate popular trips via relationship
+        popular_trips = [
+            serialize_trip(dt.trip)
+            for dt in destination.trips
+            if dt.trip is not None
+        ]
+
+        # ✅ Hydrate custom packages and their trips
+        custom_packages = []
+        for package in destination.custom_packages:
+            trips = [
+                serialize_trip(ct.trip)
+                for ct in package.trips
+                if ct.trip is not None
+            ]
+            custom_packages.append({
+                "title": package.title,
+                "description": package.description,
+                "trips": trips
+            })
+
+        # ✅ Build response
         data = {
             "id": destination.id,
             "title": destination.title,
@@ -119,15 +143,8 @@ def get_destination_by_id(destination_id: int, db: Session = Depends(get_db)):
             "travel_guidelines": destination.travel_guidelines,
             "created_at": destination.created_at,
             "updated_at": destination.updated_at,
-            "popular_trip_ids": [t.trip_id for t in destination.trips],
-            "custom_packages": [
-                {
-                    "title": p.title,
-                    "description": p.description,
-                    "trip_ids": [ct.trip_id for ct in db.query(CustomPackageTrip).filter(CustomPackageTrip.package_id == p.id).all()]
-                }
-                for p in db.query(CustomPackage).filter(CustomPackage.destination_id == destination.id).all()
-            ],
+            "popular_trips": popular_trips,
+            "custom_packages": custom_packages,
             "featured_blog_ids": [b.blog_id for b in destination.blogs if b.featured],
             "related_blog_ids": [b.blog_id for b in destination.blogs if not b.featured],
             "activity_ids": [a.activity_id for a in destination.activities],
@@ -139,6 +156,8 @@ def get_destination_by_id(destination_id: int, db: Session = Depends(get_db)):
 
     except Exception as e:
         return api_json_response_format(False, f"Error retrieving destination: {e}", 500, {})
+
+
 
 @router.get("/")
 def get_all_destinations(db: Session = Depends(get_db)):
