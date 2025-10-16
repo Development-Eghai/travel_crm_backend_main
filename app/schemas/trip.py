@@ -113,7 +113,7 @@ class TripCreate(BaseModel):
     privacy_policy: Optional[str]
     payment_terms: Optional[str]
     itinerary: Optional[List[ItineraryItem]]
-    # media: Optional[TripMediaSchema]
+    media: Optional[TripMediaSchema]
     pricing: Optional[TripPricingSchema]
     policies: Optional[List[TripPolicySchema]]
 
@@ -146,7 +146,7 @@ class TripOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     itinerary: Optional[List[ItineraryOut]]
-    # media: Optional[TripMediaOut]
+    media: Optional[TripMediaOut]
     pricing: Optional[TripPricingOut]
     policies: Optional[List[TripPolicyOut]]
 

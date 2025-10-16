@@ -4,12 +4,11 @@ from datetime import datetime
 import io
 import json
 from PIL import Image
-from utils.image import save_image
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from models.trip import Itinerary, Trip, TripMedia, TripPolicy, TripPricing
 from schemas.trip import TripCreate
-from fastapi import HTTPException,UploadFile
+from fastapi import HTTPException
 import uuid
 
 # -------------------- Slug Generator --------------------
@@ -47,65 +46,69 @@ def generate_image(image_input):
 # -------------------- Create --------------------
 
 
-def create_trip(
-    db: Session,
-    payload: TripCreate,
-    hero_image: UploadFile = None,
-    thumbnail_image: UploadFile = None,
-    gallery_images: list[UploadFile] = None
-):
+def create_trip(db: Session, payload: TripCreate):
+    # Check for duplicate slug
     if payload.slug:
         existing = db.query(Trip).filter(Trip.slug == payload.slug).first()
         if existing:
             payload.slug = generate_unique_slug(db, payload.slug)
 
-    trip_fields = payload.dict(exclude={"pricing", "policies", "itinerary", "media"})
+
+
+    # Prepare base trip data
+    trip_fields = payload.dict(exclude={"media", "pricing", "policies", "itinerary"})
     trip_fields["category_id"] = payload.category_id or None
     trip_fields["themes"] = ",".join(payload.themes or [])
 
+    # Create Trip model instance
     trip_model = Trip(**trip_fields)
     db.add(trip_model)
     db.commit()
     db.refresh(trip_model)
 
-    # Media
-    if hero_image or thumbnail_image or gallery_images:
-        media_data = {}
-        if hero_image:
-            media_data["hero_image_url"] = save_image(hero_image)
-        if thumbnail_image:
-            media_data["thumbnail_url"] = save_image(thumbnail_image)
-        if gallery_images:
-            gallery_paths = [save_image(img) for img in gallery_images]
-            media_data["gallery_urls"] = ",".join(gallery_paths)
-        db.add(TripMedia(trip_id=trip_model.id, **media_data))
+    # Add Media
+    if payload.media:
+        media_data = payload.media.dict() if hasattr(payload.media, "dict") else payload.media
+        media_data["hero_image_url"] = generate_image(media_data["hero_image_url"])
+        media_data["thumbnail_url"] = generate_image(media_data["thumbnail_url"])
+        gallery_url = media_data["gallery_urls"]
+        urls = []
+        for url in gallery_url:
+            urls.append(generate_image(url))
+        media_data["gallery_urls"] = urls
+        media_model = TripMedia(trip_id=trip_model.id, **media_data)
+        db.add(media_model)
 
-    # Pricing
+    # Add Pricing
     if payload.pricing:
-        pricing_data = jsonable_encoder(payload.pricing)
-        db.add(TripPricing(
+        pricing_data = jsonable_encoder(payload.pricing) if hasattr(payload.pricing, "dict") else payload.pricing
+        pricing_model = TripPricing(
             trip_id=trip_model.id,
             pricing_model=pricing_data.get("pricing_model"),
             data=json.dumps(pricing_data)
-        ))
+        )
+        db.add(pricing_model)
 
-    # Policies
+    # Add Policies
     if payload.policies:
         for policy in payload.policies:
-            db.add(TripPolicy(trip_id=trip_model.id, **policy.dict()))
+            policy_data = policy.dict() if hasattr(policy, "dict") else policy
+            policy_model = TripPolicy(trip_id=trip_model.id, **policy_data)
+            db.add(policy_model)
 
-    # Itinerary
+    # Add Itinerary
     if payload.itinerary:
         for day in payload.itinerary:
-            day_data = day.dict()
+            day_data = day.dict() if hasattr(day, "dict") else day
             day_data["image_urls"] = ",".join(day_data.get("image_urls", []))
             day_data["activities"] = ",".join(day_data.get("activities", []))
             day_data["meal_plan"] = ",".join(day_data.get("meal_plan", []))
-            db.add(Itinerary(trip_id=trip_model.id, **day_data))
+            itinerary_model = Itinerary(trip_id=trip_model.id, **day_data)
+            db.add(itinerary_model)
 
     db.commit()
-    return trip_model
 
+    return trip_model
 
 
 # -------------------- Read --------------------
@@ -230,21 +233,34 @@ def serialize_trip(trip: Trip) -> dict:
         "payment_terms": trip.payment_terms,
         "created_at": trip.created_at,
         "updated_at": trip.updated_at,
+
         "media": {
             "hero_image_url": trip.media.hero_image_url if trip.media else None,
             "thumbnail_url": trip.media.thumbnail_url if trip.media else None,
             "gallery_urls": trip.media.gallery_urls.split(",") if trip.media and trip.media.gallery_urls else []
         } if trip.media else None,
-        "pricing": json.loads(trip.pricing.data) if trip.pricing else None,
-        "policies": [{"title": p.title, "content": p.content} for p in trip.policies] if trip.policies else [],
-        "itinerary": [{
-            "day_number": i.day_number,
-            "title": i.title,
-            "description": i.description,
-            "image_urls": i.image_urls.split(",") if i.image_urls else [],
-            "activities": i.activities.split(",") if i.activities else [],
-            "hotel_name": i.hotel_name,
-            "meal_plan": i.meal_plan.split(",") if i.meal_plan else []
-        } for i in trip.itinerary] if trip.itinerary else []
-    }
 
+        "pricing": {
+            "pricing_model": trip.pricing.pricing_model,
+            "fixed_departure": json.loads(trip.pricing.data)
+        } if trip.pricing else None,
+
+        "policies": [
+            {
+                "title": p.title,
+                "content": p.content
+            } for p in trip.policies
+        ] if trip.policies else [],
+
+        "itinerary": [
+            {
+                "day_number": i.day_number,
+                "title": i.title,
+                "description": i.description,
+                "image_urls": i.image_urls.split(",") if i.image_urls else [],
+                "activities": i.activities.split(",") if i.activities else [],
+                "hotel_name": i.hotel_name,
+                "meal_plan": i.meal_plan.split(",") if i.meal_plan else []
+            } for i in trip.itinerary
+        ] if trip.itinerary else []
+    }
