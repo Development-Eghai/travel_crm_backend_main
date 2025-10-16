@@ -105,6 +105,15 @@ except Exception as e:
     print(f"Startup error: {e}", file=sys.stderr)
     raise
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or specify your frontend origin like "http://localhost:5173"
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.get("/")
 def gateway_root():
     return {"msg": "Travel CRM Gateway is live with the UPDATED GIT version in hostinger"}
