@@ -207,6 +207,32 @@ def delete_trip(db: Session, trip_id: int) -> dict:
 
 # -------------------- Serializer --------------------
 
+def normalize_fixed_departure(data: str) -> dict:
+    try:
+        parsed = json.loads(data)
+        customized_list = parsed.get("customized")
+
+        if isinstance(customized_list, list) and customized_list:
+            parsed["customized"] = customized_list[0]  # Take first item
+        elif isinstance(customized_list, list):
+            parsed["customized"] = {
+                "pricing_type": "string",
+                "base_price": 0,
+                "discount": 0,
+                "final_price": 0
+            }
+
+        return parsed
+    except Exception:
+        return {
+            "customized": {
+                "pricing_type": "string",
+                "base_price": 0,
+                "discount": 0,
+                "final_price": 0
+            }
+        }
+
 def serialize_trip(trip: Trip) -> dict:
     return {
         "id": trip.id,
@@ -242,8 +268,9 @@ def serialize_trip(trip: Trip) -> dict:
 
         "pricing": {
             "pricing_model": trip.pricing.pricing_model,
-            "fixed_departure": json.loads(trip.pricing.data)
+            "fixed_departure": normalize_fixed_departure(trip.pricing.data)
         } if trip.pricing else None,
+
 
         "policies": [
             {
