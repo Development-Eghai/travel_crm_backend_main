@@ -1,9 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from core.database import get_db
 from schemas.trip import TripCreate
-from pydantic import BaseModel
-from typing import List
 from crud.trip import (
     create_trip,
     get_trips,
@@ -12,10 +10,10 @@ from crud.trip import (
     serialize_trip,
     update_trip
 )
+import json
 
 router = APIRouter()
 
-# ✅ Unified response format
 def api_json_response_format(status: bool, message: str, error_code: int, data: any) -> dict:
     return {
         "success": status,
@@ -24,18 +22,18 @@ def api_json_response_format(status: bool, message: str, error_code: int, data: 
         "data": data
     }
 
-# ✅ List all trips with optional pagination
+
+
 @router.get("/", response_model=dict)
-def list_trips(skip: int = Query(0, ge=0), limit: int = Query(10, le=100), db: Session = Depends(get_db)) -> dict:
+def list_trips(skip: int = Query(0), limit: int = Query(10), db: Session = Depends(get_db)):
     try:
         trips = get_trips(db, skip=skip, limit=limit)
         return api_json_response_format(True, "Trips fetched successfully", 0, trips)
     except Exception as e:
         return api_json_response_format(False, str(e), 500, None)
 
-# ✅ Get single trip by ID
 @router.get("/{trip_id}", response_model=dict)
-def get_trip_by_id_endpoint(trip_id: int, db: Session = Depends(get_db)) -> dict:
+def get_trip_by_id_endpoint(trip_id: int, db: Session = Depends(get_db)):
     try:
         trip = get_trip_by_id(db, trip_id)
         if not trip:
@@ -43,20 +41,74 @@ def get_trip_by_id_endpoint(trip_id: int, db: Session = Depends(get_db)) -> dict
         return api_json_response_format(True, "Trip fetched successfully", 0, trip)
     except Exception as e:
         return api_json_response_format(False, str(e), 500, None)
+    
 
-# ✅ Create new trip
+
 @router.post("/", response_model=dict)
-def create_trip_endpoint(trip: TripCreate, db: Session = Depends(get_db)) -> dict:
+def create_trip_endpoint(
+    title: str = Form(...),
+    overview: str = Form(...),
+    destination_id: int = Form(...),
+    destination_type: str = Form(...),
+    category_id: int = Form(...),
+    themes: str = Form(...),
+    hotel_category: int = Form(...),
+    pickup_location: str = Form(...),
+    drop_location: str = Form(...),
+    days: int = Form(...),
+    nights: int = Form(...),
+    meta_tags: str = Form(...),
+    slug: str = Form(...),
+    pricing_model: str = Form(...),
+    highlights: str = Form(...),
+    inclusions: str = Form(...),
+    exclusions: str = Form(...),
+    faqs: str = Form(...),
+    terms: str = Form(...),
+    privacy_policy: str = Form(...),
+    payment_terms: str = Form(...),
+    itinerary: str = Form(...),
+    pricing: str = Form(...),
+    policies: str = Form(...),
+    hero_image: UploadFile = File(None),
+    thumbnail_image: UploadFile = File(None),
+    gallery_images: list[UploadFile] = File(None),
+    db: Session = Depends(get_db)
+):
     try:
-        new_trip = create_trip(db, trip)
-        data = serialize_trip(new_trip)
-        return api_json_response_format(True, "Trip created successfully", 0, data)
+        payload = TripCreate(
+            title=title,
+            overview=overview,
+            destination_id=destination_id,
+            destination_type=destination_type,
+            category_id=category_id,
+            themes=themes.split(","),
+            hotel_category=hotel_category,
+            pickup_location=pickup_location,
+            drop_location=drop_location,
+            days=days,
+            nights=nights,
+            meta_tags=meta_tags,
+            slug=slug,
+            pricing_model=pricing_model,
+            highlights=highlights,
+            inclusions=inclusions,
+            exclusions=exclusions,
+            faqs=json.loads(faqs),
+            terms=terms,
+            privacy_policy=privacy_policy,
+            payment_terms=payment_terms,
+            itinerary=json.loads(itinerary),
+            pricing=json.loads(pricing),
+            policies=json.loads(policies)
+        )
+        new_trip = create_trip(db, payload, hero_image, thumbnail_image, gallery_images)
+        return api_json_response_format(True, "Trip created successfully", 0, serialize_trip(new_trip))
     except Exception as e:
         return api_json_response_format(False, str(e), 500, None)
 
-# ✅ Update existing trip
 @router.put("/{trip_id}", response_model=dict)
-def update_trip_endpoint(trip_id: int, trip: TripCreate, db: Session = Depends(get_db)) -> dict:
+def update_trip_endpoint(trip_id: int, trip: TripCreate, db: Session = Depends(get_db)):
     try:
         updated = update_trip(db, trip_id, trip)
         if not updated:
@@ -67,30 +119,12 @@ def update_trip_endpoint(trip_id: int, trip: TripCreate, db: Session = Depends(g
     except Exception as e:
         return api_json_response_format(False, str(e), 500, None)
 
-# ✅ Delete trip
 @router.delete("/{trip_id}", response_model=dict)
-def delete_trip_endpoint(trip_id: int, db: Session = Depends(get_db)) -> dict:
+def delete_trip_endpoint(trip_id: int, db: Session = Depends(get_db)):
     try:
         result = delete_trip(db, trip_id)
         return api_json_response_format(True, result["message"], 0, None)
     except HTTPException as he:
         return api_json_response_format(False, he.detail, he.status_code, None)
-    except Exception as e:
-        return api_json_response_format(False, str(e), 500, None)
-    
-class TripIdList(BaseModel):
-    trip_ids: List[int]
-
-@router.post("/batch", response_model=dict)
-def get_multiple_trips(payload: TripIdList, db: Session = Depends(get_db)) -> dict:
-    try:
-        trips = []
-        for trip_id in payload.trip_ids:
-            trip = get_trip_by_id(db, trip_id)  # Already serialized
-            if trip:
-                trips.append(trip)  # No need to call serialize_trip again
-        if not trips:
-            return api_json_response_format(False, "No trips found for given IDs", 404, [])
-        return api_json_response_format(True, "Trips fetched successfully", 0, trips)
     except Exception as e:
         return api_json_response_format(False, str(e), 500, None)
