@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from core.database import get_db
 from schemas.trip import TripCreate
+from pydantic import BaseModel
+from typing import List
 from crud.trip import (
     create_trip,
     get_trips,
@@ -73,5 +75,22 @@ def delete_trip_endpoint(trip_id: int, db: Session = Depends(get_db)) -> dict:
         return api_json_response_format(True, result["message"], 0, None)
     except HTTPException as he:
         return api_json_response_format(False, he.detail, he.status_code, None)
+    except Exception as e:
+        return api_json_response_format(False, str(e), 500, None)
+    
+class TripIdList(BaseModel):
+    trip_ids: List[int]
+
+@router.post("/batch", response_model=dict)
+def get_multiple_trips(payload: TripIdList, db: Session = Depends(get_db)) -> dict:
+    try:
+        trips = []
+        for trip_id in payload.trip_ids:
+            trip = get_trip_by_id(db, trip_id)  # Already serialized
+            if trip:
+                trips.append(trip)  # No need to call serialize_trip again
+        if not trips:
+            return api_json_response_format(False, "No trips found for given IDs", 404, [])
+        return api_json_response_format(True, "Trips fetched successfully", 0, trips)
     except Exception as e:
         return api_json_response_format(False, str(e), 500, None)

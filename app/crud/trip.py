@@ -122,6 +122,7 @@ def get_trip_by_id(db: Session, trip_id: int) -> dict:
     return serialize_trip(trip) if trip else None
 
 
+
 # -------------------- Update --------------------
 
 def update_trip(db: Session, trip_id: int, payload: TripCreate):
