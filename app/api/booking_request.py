@@ -1,3 +1,4 @@
+from utils.email_utility import send_booking_email
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from models.booking_request import BookingRequest
@@ -15,9 +16,14 @@ def create_booking(data: BookingRequestCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(booking)
         response_data = BookingRequestOut.model_validate(booking).model_dump()
+
+        # ✅ Send confirmation email
+        send_booking_email(response_data)
+
         return api_json_response_format(True, "Booking request submitted successfully.", 201, response_data)
     except Exception as e:
         return api_json_response_format(False, f"Error submitting booking request: {e}", 500, {})
+
 
 @router.get("/")
 def get_all_bookings(db: Session = Depends(get_db)):

@@ -1,3 +1,4 @@
+from utils.email_utility import send_trip_inquiry_email
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from models.trip_inquiries import TripInquiry
@@ -23,6 +24,7 @@ def create_trip_inquiry(data: TripInquiryCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(inquiry)
         response_data = TripInquiryOut.model_validate(inquiry).model_dump()
+        send_trip_inquiry_email(response_data)
         return api_json_response_format(True, "Trip inquiry submitted successfully.", 201, response_data)
     except Exception as e:
         return api_json_response_format(False, f"Error submitting trip inquiry: {e}", 500, {})

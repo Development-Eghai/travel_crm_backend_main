@@ -1,3 +1,4 @@
+from utils.email_utility import send_enquiry_email
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -35,8 +36,12 @@ async def create_enquiry(data: EnquireFormCreate, db: Session = Depends(get_db))
         db.add(new_enquiry)
         db.commit()
         db.refresh(new_enquiry)
-        data = EnquireFormOut.model_validate(new_enquiry).model_dump()
-        return api_json_response_format(True, "Enquiry created successfully.", 201, data)
+        response_data = EnquireFormOut.model_validate(new_enquiry).model_dump()
+
+        # ✅ Send email notification
+        send_enquiry_email(response_data)
+
+        return api_json_response_format(True, "Enquiry created successfully.", 201, response_data)
     except Exception as e:
         return api_json_response_format(False, f"Error creating enquiry: {e}", 500, {})
 
