@@ -18,13 +18,13 @@ class ItineraryOut(ItineraryItem):
 
 # -------------------- Media --------------------
 
-class TripMediaSchema(BaseModel):
-    hero_image_url: str
-    thumbnail_url: str
-    gallery_urls: List[str]
+# class TripMediaSchema(BaseModel):
+#     hero_image_url: str
+#     thumbnail_url: str
+#     gallery_urls: List[str]
 
-class TripMediaOut(TripMediaSchema):
-    pass
+# class TripMediaOut(TripMediaSchema):
+#     pass
 
 # -------------------- Pricing --------------------
 
@@ -54,27 +54,21 @@ class FixedDepartureOut(FixedDeparture):
 
 class TripPricingSchema(BaseModel):
     pricing_model: Literal["fixed_departure", "customized"]
-    fixed_departure: Optional[List[FixedDeparture]] = None
-    customized: Optional[List[CustomizedPricing]] = None  # ← updated type
+    fixed_departure: Optional[FixedDeparture] = None
+    customized: Optional[CustomizedPricing] = None
 
     @model_validator(mode="after")
     def check_pricing_fields(cls, model_instance: "TripPricingSchema") -> "TripPricingSchema":
-        """
-        Ensure only the relevant field is populated based on pricing_model.
-        In Pydantic v2, this receives the instance, not a dict.
-        """
         if model_instance.pricing_model == "fixed_departure":
-            if not model_instance.fixed_departure or len(model_instance.fixed_departure) == 0:
+            if not model_instance.fixed_departure:
                 raise ValueError("fixed_departure is required when pricing_model='fixed_departure'")
-            # Ignore customized
             model_instance.customized = None
         elif model_instance.pricing_model == "customized":
-            if not model_instance.customized or len(model_instance.customized) == 0:
+            if not model_instance.customized:
                 raise ValueError("customized is required when pricing_model='customized'")
-            # Ignore fixed_departure
             model_instance.fixed_departure = None
-
         return model_instance
+
 class TripPricingOut(TripPricingSchema):
     fixed_departure: List[FixedDepartureOut]
     customized: List[customizedOut]
@@ -103,6 +97,8 @@ class TripCreate(BaseModel):
     days: int
     nights: int
     meta_tags: Optional[str]
+    hero_image: Optional[str]
+    gallery_images : Optional[List[str]] = []
     slug: str
     pricing_model: str
     highlights: Optional[str]
@@ -134,6 +130,8 @@ class TripOut(BaseModel):
     days: int
     nights: int
     meta_tags: Optional[str]
+    hero_image: Optional[str]
+    gallery_images : Optional[List[str]] = []
     slug: str
     pricing_model: str
     highlights: Optional[str]

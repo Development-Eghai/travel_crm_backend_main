@@ -15,6 +15,7 @@ class Destination(Base):
     slug = Column(String(255), unique=True, index=True)
     overview = Column(Text)
     travel_guidelines = Column(Text)
+    hero_banner_images = Column(Text)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 

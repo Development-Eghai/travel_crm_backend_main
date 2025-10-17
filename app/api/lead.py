@@ -51,40 +51,55 @@ def upload_lead_document(
         return api_json_response_format(False, f"Error uploading document: {e}", 500, {})
 
 
+# @router.post("/")
+# def create_lead(lead_in: LeadCreate, db: Session = Depends(get_db)):
+#     try:
+#         # Create base lead
+#         lead_data = lead_in.model_dump(exclude={"comments", "linked_documents"})
+#         lead = Lead(**lead_data)
+#         db.add(lead)
+#         db.commit()
+#         db.refresh(lead)
+
+#         # Comments
+#         for comment in lead_in.comments:
+#             db.add(LeadComment(
+#                 lead_id=lead.id,
+#                 user_name=comment.user_name,
+#                 comment=comment.comment
+#             ))
+
+#         # Documents
+#         for doc in lead_in.linked_documents:
+#             db.add(LeadDocument(
+#                 lead_id=lead.id,
+#                 file_name=doc.file_name,
+#                 file_path=doc.file_path,
+#                 uploaded_by=doc.uploaded_by,
+#                 uploaded_at=doc.uploaded_at
+#             ))
+
+#         db.commit()
+
+#         return api_json_response_format(True, "Lead created successfully.", 201, {"lead_id": lead.id})
+
+#     except Exception as e:
+#         return api_json_response_format(False, f"Error creating lead: {e}", 500, {})
+
 @router.post("/")
 def create_lead(lead_in: LeadCreate, db: Session = Depends(get_db)):
     try:
-        # Create base lead
-        lead_data = lead_in.model_dump(exclude={"comments", "linked_documents"})
+        lead_data = lead_in.model_dump(exclude_unset=True)
         lead = Lead(**lead_data)
         db.add(lead)
         db.commit()
         db.refresh(lead)
 
-        # Comments
-        for comment in lead_in.comments:
-            db.add(LeadComment(
-                lead_id=lead.id,
-                user_name=comment.user_name,
-                comment=comment.comment
-            ))
-
-        # Documents
-        for doc in lead_in.linked_documents:
-            db.add(LeadDocument(
-                lead_id=lead.id,
-                file_name=doc.file_name,
-                file_path=doc.file_path,
-                uploaded_by=doc.uploaded_by,
-                uploaded_at=doc.uploaded_at
-            ))
-
-        db.commit()
-
         return api_json_response_format(True, "Lead created successfully.", 201, {"lead_id": lead.id})
 
     except Exception as e:
         return api_json_response_format(False, f"Error creating lead: {e}", 500, {})
+
 
 @router.get("/")
 def get_all_leads(db: Session = Depends(get_db)):

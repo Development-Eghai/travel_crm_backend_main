@@ -28,6 +28,8 @@ class Trip(Base):
     highlights = Column(Text)
     inclusions = Column(Text)
     exclusions = Column(Text)
+    hero_image = Column(String) 
+    gallery_images = Column(Text)  
     # faqs = Column(Text)
     faqs = Column(JSON)
     terms = Column(Text)
@@ -69,9 +71,9 @@ class TripMedia(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     trip_id = Column(Integer, ForeignKey("trips.id"))
-    hero_image_url = Column(String(255))
+    hero_image = Column(String(255))
     thumbnail_url = Column(String(255))
-    gallery_urls = Column(Text)  # comma-separated
+    gallery_images = Column(Text)  # comma-separated
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 

@@ -22,6 +22,8 @@ class DestinationCreate(BaseModel):
     activity_ids: List[int]
     testimonial_ids: List[int]
     related_blog_ids: List[int]
+    hero_banner_images: Optional[List[str]] = []
+
 
 class CustomPackageOut(BaseModel):
     title: str
@@ -37,6 +39,7 @@ class DestinationOut(BaseModel):
     slug: str
     overview: Optional[str]
     travel_guidelines: Optional[str]
+    hero_banner_images: Optional[List[str]] = []
     created_at: datetime
     updated_at: datetime
 

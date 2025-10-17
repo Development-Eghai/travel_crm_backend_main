@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 from crud.trip import serialize_trip
@@ -27,8 +28,10 @@ def create_destination(destination_in: DestinationCreate, db: Session = Depends(
             primary_destination_id=destination_in.primary_destination_id,
             slug=slug,
             overview=destination_in.overview,
-            travel_guidelines=destination_in.travel_guidelines
+            travel_guidelines=destination_in.travel_guidelines,
+            hero_banner_images=json.dumps(destination_in.hero_banner_images or [])
         )
+
         db.add(destination)
         db.commit()
         db.refresh(destination)
@@ -67,6 +70,9 @@ def create_destination(destination_in: DestinationCreate, db: Session = Depends(
             "slug": destination.slug,
             "overview": destination.overview,
             "travel_guidelines": destination.travel_guidelines,
+            "hero_banner_images": json.loads(destination.hero_banner_images or "[]"),
+
+            # "hero_banner_images": destination.hero_banner_images,
             "created_at": destination.created_at,
             "updated_at": destination.updated_at,
             "popular_trip_ids": [t.trip_id for t in destination.trips],
@@ -102,6 +108,7 @@ def get_trips(trip_ids: List[int] = Query(...), db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No trips found for the given IDs")
 
     return trips
+
 
 @router.get("/{destination_id}")
 def get_destination_by_id(destination_id: int, db: Session = Depends(get_db)):
@@ -141,6 +148,8 @@ def get_destination_by_id(destination_id: int, db: Session = Depends(get_db)):
             "slug": destination.slug,
             "overview": destination.overview,
             "travel_guidelines": destination.travel_guidelines,
+            "hero_banner_images": json.loads(destination.hero_banner_images or "[]"),
+
             "created_at": destination.created_at,
             "updated_at": destination.updated_at,
             "popular_trips": popular_trips,
@@ -156,8 +165,6 @@ def get_destination_by_id(destination_id: int, db: Session = Depends(get_db)):
 
     except Exception as e:
         return api_json_response_format(False, f"Error retrieving destination: {e}", 500, {})
-
-
 
 @router.get("/")
 def get_all_destinations(db: Session = Depends(get_db)):
@@ -175,6 +182,8 @@ def get_all_destinations(db: Session = Depends(get_db)):
                 "slug": destination.slug,
                 "overview": destination.overview,
                 "travel_guidelines": destination.travel_guidelines,
+                "hero_banner_images": json.loads(destination.hero_banner_images or "[]"),
+
                 "created_at": destination.created_at,
                 "updated_at": destination.updated_at,
                 "popular_trip_ids": [t.trip_id for t in destination.trips],
@@ -211,7 +220,11 @@ def update_destination(destination_id: int, destination_in: DestinationCreate, d
             "custom_packages", "popular_trip_ids", "featured_blog_ids",
             "related_blog_ids", "activity_ids", "testimonial_ids", "blog_category_ids"
         }).items():
-            setattr(destination, key, value)
+            if key == "hero_banner_images":
+                setattr(destination, key, json.dumps(value or []))
+            else:
+                setattr(destination, key, value)
+
 
         # Clear and re-add popular trips
         db.query(DestinationTrip).filter(DestinationTrip.destination_id == destination.id).delete()
@@ -269,6 +282,8 @@ def update_destination(destination_id: int, destination_in: DestinationCreate, d
             "created_at": destination.created_at,
             "updated_at": destination.updated_at,
             "popular_trip_ids": [t.trip_id for t in destination.trips],
+            "hero_banner_images": json.loads(destination.hero_banner_images or "[]"),
+
             "custom_packages": [
                 {
                     "title": p.title,
