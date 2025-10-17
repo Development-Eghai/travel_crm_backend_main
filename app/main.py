@@ -8,19 +8,20 @@ from fastapi.responses import JSONResponse
 from typing import List
 
 
-
 import os
 
 from api import trip_management
 from api import invoice
 from api.view_enquireform import enquire_router
+from api.booking_request import booking_router
+from api.trip_inquiries import trip_inquiry_router
 from core.security import verify_api_key
 from api.user import user_router
 from api import (
     trip, destination, activity, trip_type, lead, lead_comments, quotation,
     bookings, category, trip_day, fixed_departure, lead_assignment, task,
     role, site_setting, activity_type, blog_post, tag, blog_category,
-    quotation_item, user
+    quotation_item, user,booking_request
 )
 
 # 🔐 Secure app with global dependency
@@ -94,6 +95,9 @@ public_app.add_middleware(
 
 public_app.include_router(user_router, prefix="/api/users", tags=["Users"])
 public_app.include_router(enquire_router,prefix="/api/enquires", tags=["Enquires"])
+public_app.include_router(booking_router, prefix="/api/booking_request", tags=["Booking Requests"])
+public_app.include_router(trip_inquiry_router, prefix="/api/trip_enquires", tags=["Trip Enquires"])
+
 
 try:
     # 🧬 Mount both apps

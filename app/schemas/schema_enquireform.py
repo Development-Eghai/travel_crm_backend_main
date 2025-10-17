@@ -16,7 +16,22 @@ class EnquireFormCreate(BaseModel):
     email: EmailStr
     additional_comments: Optional[str] = None
 
-class EnquireFormOut(EnquireFormCreate):
+class EnquireFormOut(BaseModel):
     id: int
+    destination: str
+    departure_city: str
+    travel_date: str
+    adults: int
+    children: Optional[int]
+    infants: Optional[int]
+    hotel_category: Optional[str]
+    full_name: str
+    contact_number: str
+    email: EmailStr
+    additional_comments: Optional[str]
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True  # ✅ Enables ORM model parsing
+

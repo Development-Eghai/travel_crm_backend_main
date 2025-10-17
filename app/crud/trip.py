@@ -60,7 +60,7 @@ def create_trip(db: Session, payload: TripCreate):
     trip_fields["category_id"] = payload.category_id or None
     trip_fields["themes"] = ",".join(payload.themes or [])
     trip_fields["faqs"] = json.dumps(payload.faqs or [])
-    trip_fields["gallery_images"] = ",".join(payload.gallery_images or [])
+    trip_fields["gallery_images"] = json.dumps(payload.gallery_images or [])
     trip_fields["hero_image"] = payload.hero_image
 
     # Create Trip model instance
@@ -139,7 +139,7 @@ def update_trip(db: Session, trip_id: int, payload: TripCreate):
     trip_fields["category_id"] = payload.category_id or None
     trip_fields["themes"] = ",".join(payload.themes or [])
     trip_fields["faqs"] = json.dumps(payload.faqs or [])
-    trip_fields["gallery_images"] = ",".join(payload.gallery_images or [])
+    trip_fields["gallery_images"] = json.dumps(payload.gallery_images or [])
     trip_fields["hero_image"] = payload.hero_image
 
     for key, value in trip_fields.items():
@@ -261,14 +261,14 @@ def serialize_trip(trip: Trip) -> dict:
         "highlights": trip.highlights,
         "inclusions": trip.inclusions,
         "exclusions": trip.exclusions,
-        "faqs": trip.faqs,
+        "faqs": json.loads(trip.faqs) if trip.faqs else [],
         "terms": trip.terms,
         "privacy_policy": trip.privacy_policy,
         "payment_terms": trip.payment_terms,
         "created_at": trip.created_at,
         "updated_at": trip.updated_at,
         "hero_image": trip.hero_image,
-        "gallery_images": trip.gallery_images.split(",") if trip.gallery_images else [],
+        "gallery_images": json.loads(trip.gallery_images) if trip.gallery_images else [],
 
         # "media": {
         #     "hero_image_url": trip.media.hero_image_url if trip.media else None,

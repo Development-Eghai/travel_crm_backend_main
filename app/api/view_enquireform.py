@@ -4,27 +4,40 @@ from typing import List
 from models.model_enquireform import EnquireForm
 from schemas.schema_enquireform import EnquireFormCreate, EnquireFormOut
 from core.database import get_db
+from utils.response import api_json_response_format
 
 router = APIRouter()
 
-@router.get("/", response_model=List[EnquireFormOut])
+@router.get("/")
 async def get_enquiries(db: Session = Depends(get_db)):
-    enquiries = db.query(EnquireForm).order_by(EnquireForm.created_at.desc()).all()
-    return enquiries
+    try:
+        enquiries = db.query(EnquireForm).order_by(EnquireForm.created_at.desc()).all()
+        data = [EnquireFormOut.model_validate(e).model_dump() for e in enquiries]
+        return api_json_response_format(True, "Enquiries retrieved successfully.", 200, data)
+    except Exception as e:
+        return api_json_response_format(False, f"Error retrieving enquiries: {e}", 500, {})
 
-@router.get("/{enquire_id}", response_model=EnquireFormOut)
+@router.get("/{enquire_id}")
 async def get_enquiry(enquire_id: int, db: Session = Depends(get_db)):
-    enquiry = db.query(EnquireForm).filter(EnquireForm.id == enquire_id).first()
-    if not enquiry:
-        raise HTTPException(status_code=404, detail="Enquiry not found")
-    return enquiry
+    try:
+        enquiry = db.query(EnquireForm).filter(EnquireForm.id == enquire_id).first()
+        if not enquiry:
+            return api_json_response_format(False, "Enquiry not found", 404, {})
+        data = EnquireFormOut.model_validate(enquiry).model_dump()
+        return api_json_response_format(True, "Enquiry retrieved successfully.", 200, data)
+    except Exception as e:
+        return api_json_response_format(False, f"Error retrieving enquiry: {e}", 500, {})
 
-@router.post("/", response_model=EnquireFormOut, status_code=status.HTTP_201_CREATED)
+@router.post("/")
 async def create_enquiry(data: EnquireFormCreate, db: Session = Depends(get_db)):
-    new_enquiry = EnquireForm(**data.dict())
-    db.add(new_enquiry)
-    db.commit()
-    db.refresh(new_enquiry)
-    return new_enquiry
+    try:
+        new_enquiry = EnquireForm(**data.dict())
+        db.add(new_enquiry)
+        db.commit()
+        db.refresh(new_enquiry)
+        data = EnquireFormOut.model_validate(new_enquiry).model_dump()
+        return api_json_response_format(True, "Enquiry created successfully.", 201, data)
+    except Exception as e:
+        return api_json_response_format(False, f"Error creating enquiry: {e}", 500, {})
 
 enquire_router = router
