@@ -5,56 +5,46 @@ from datetime import datetime
 # -------------------- Itinerary --------------------
 
 class ItineraryItem(BaseModel):
-    day_number: int
-    title: str
-    description: str
-    image_urls: List[str]
-    activities: List[str]
-    hotel_name: str
-    meal_plan: List[str]
+    day_number: Optional[int]
+    title: Optional[str]
+    description: Optional[str]
+    image_urls: Optional[List[str]] = []
+    activities: Optional[List[str]] = []
+    hotel_name: Optional[str]
+    meal_plan: Optional[List[str]] = []
 
 class ItineraryOut(ItineraryItem):
     pass
 
-# -------------------- Media --------------------
-
-# class TripMediaSchema(BaseModel):
-#     hero_image_url: str
-#     thumbnail_url: str
-#     gallery_urls: List[str]
-
-# class TripMediaOut(TripMediaSchema):
-#     pass
-
 # -------------------- Pricing --------------------
 
 class FixedDeparture(BaseModel):
-    from_date: datetime
-    to_date: datetime
-    available_slots: int
-    title: str
-    description: str
-    base_price: float
-    discount: float
-    final_price: float
-    booking_amount: float
-    gst_percentage: float
-
-class CustomizedPricing(BaseModel):
-    pricing_type: str
-    base_price: float
-    discount: float
-    final_price: float
-
-class customizedOut(BaseModel):
-    pass
+    from_date: Optional[datetime]
+    to_date: Optional[datetime]
+    available_slots: Optional[int]
+    title: Optional[str]
+    description: Optional[str]
+    base_price: Optional[float]
+    discount: Optional[float]
+    final_price: Optional[float]
+    booking_amount: Optional[float]
+    gst_percentage: Optional[float]
 
 class FixedDepartureOut(FixedDeparture):
     pass
 
+class CustomizedPricing(BaseModel):
+    pricing_type: Optional[str]
+    base_price: Optional[float]
+    discount: Optional[float]
+    final_price: Optional[float]
+
+class customizedOut(CustomizedPricing):
+    pass
+
 class TripPricingSchema(BaseModel):
-    pricing_model: Literal["fixed_departure", "customized"]
-    fixed_departure: Optional[List[FixedDeparture]] = None 
+    pricing_model: Optional[Literal["fixed_departure", "customized"]]
+    fixed_departure: Optional[List[FixedDeparture]] = None
     customized: Optional[CustomizedPricing] = None
 
     @model_validator(mode="after")
@@ -69,15 +59,16 @@ class TripPricingSchema(BaseModel):
             model_instance.fixed_departure = None
         return model_instance
 
-class TripPricingOut(TripPricingSchema):
-    fixed_departure: List[FixedDepartureOut]
-    customized: List[customizedOut]
+class TripPricingOut(BaseModel):
+    pricing_model: Optional[str]
+    fixed_departure: Optional[List[FixedDepartureOut]] = []
+    customized: Optional[customizedOut] = None
 
 # -------------------- Policies --------------------
 
 class TripPolicySchema(BaseModel):
-    title: str
-    content: str
+    title: Optional[str]
+    content: Optional[str]
 
 class TripPolicyOut(TripPolicySchema):
     pass
@@ -85,68 +76,65 @@ class TripPolicyOut(TripPolicySchema):
 # -------------------- TripCreate --------------------
 
 class TripCreate(BaseModel):
-    title: str
+    title: Optional[str]
     overview: Optional[str]
-    destination_id: int
-    destination_type: str
+    destination_id: Optional[int]
+    destination_type: Optional[str]
     category_id: Optional[int]
     themes: Optional[List[str]] = []
     hotel_category: Optional[int]
     pickup_location: Optional[str]
     drop_location: Optional[str]
-    days: int
-    nights: int
+    days: Optional[int]
+    nights: Optional[int]
     meta_tags: Optional[str]
     hero_image: Optional[str]
-    gallery_images : Optional[List[str]] = []
-    slug: str
-    pricing_model: str
+    gallery_images: Optional[List[str]] = []
+    slug: Optional[str]
+    pricing_model: Optional[str]
     highlights: Optional[str]
     inclusions: Optional[str]
     exclusions: Optional[str]
-    faqs: Optional[list[dict]] = None
+    faqs: Optional[List[dict]] = []
     terms: Optional[str]
     privacy_policy: Optional[str]
     payment_terms: Optional[str]
-    itinerary: Optional[List[ItineraryItem]]
-    # media: Optional[TripMediaSchema]
+    itinerary: Optional[List[ItineraryItem]] = []
     pricing: Optional[TripPricingSchema]
-    policies: Optional[List[TripPolicySchema]]
+    policies: Optional[List[TripPolicySchema]] = []
 
 # -------------------- TripOut --------------------
 
 class TripOut(BaseModel):
-    id: int
-    title: str
+    id: Optional[int]
+    title: Optional[str]
     overview: Optional[str]
-    destination_id: int
-    destination_type: str
+    destination_id: Optional[int]
+    destination_type: Optional[str]
     category_id: Optional[int]
-    # category: Optional[str] = None
     themes: Optional[List[str]] = []
     hotel_category: Optional[int]
     pickup_location: Optional[str]
     drop_location: Optional[str]
-    days: int
-    nights: int
+    days: Optional[int]
+    nights: Optional[int]
     meta_tags: Optional[str]
     hero_image: Optional[str]
-    gallery_images : Optional[List[str]] = []
-    slug: str
-    pricing_model: str
+    gallery_images: Optional[List[str]] = []
+    slug: Optional[str]
+    pricing_model: Optional[str]
     highlights: Optional[str]
     inclusions: Optional[str]
     exclusions: Optional[str]
-    faqs: Optional[dict] = None
+    faqs: Optional[dict] = {}
     terms: Optional[str]
     privacy_policy: Optional[str]
     payment_terms: Optional[str]
-    created_at: datetime
-    updated_at: datetime
-    itinerary: Optional[List[ItineraryOut]]
-    # media: Optional[TripMediaOut]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    itinerary: Optional[List[ItineraryOut]] = []
     pricing: Optional[TripPricingOut]
-    policies: Optional[List[TripPolicyOut]]
+    policies: Optional[List[TripPolicyOut]] = []
 
     class Config:
         from_attributes = True
