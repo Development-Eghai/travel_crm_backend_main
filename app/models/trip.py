@@ -71,9 +71,9 @@ class TripMedia(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     trip_id = Column(Integer, ForeignKey("trips.id"))
-    hero_image = Column(String(255))
+    hero_image_url = Column(String(255))
     thumbnail_url = Column(String(255))
-    gallery_images = Column(Text)  # comma-separated
+    gallery_urls = Column(Text)  # ✅ Correct column name
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 

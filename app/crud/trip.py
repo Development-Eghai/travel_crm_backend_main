@@ -104,8 +104,15 @@ def create_trip(db: Session, payload: TripCreate):
 # -------------------- Read --------------------
 
 def get_trips(db: Session, skip: int = 0, limit: int = 10) -> list:
-    trips = db.query(Trip).offset(skip).limit(limit).all()
+    trips = (
+        db.query(Trip)
+        .order_by(Trip.created_at.desc())  # ✅ newest first
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return [serialize_trip(t) for t in trips]
+
 
 def get_trip_by_id(db: Session, trip_id: int) -> dict:
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
