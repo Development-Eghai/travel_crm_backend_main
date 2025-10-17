@@ -54,7 +54,7 @@ class FixedDepartureOut(FixedDeparture):
 
 class TripPricingSchema(BaseModel):
     pricing_model: Literal["fixed_departure", "customized"]
-    fixed_departure: Optional[FixedDeparture] = None
+    fixed_departure: Optional[List[FixedDeparture]] = None 
     customized: Optional[CustomizedPricing] = None
 
     @model_validator(mode="after")

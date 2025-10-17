@@ -197,17 +197,21 @@ def normalize_fixed_departure(data: str) -> dict:
     try:
         parsed = json.loads(data)
 
-        # Flatten fixed_departure list to single object
+        # Ensure fixed_departure is a list of objects
         fixed_list = parsed.get("fixed_departure")
-        if isinstance(fixed_list, list) and fixed_list:
-            parsed["fixed_departure"] = fixed_list[0]
-        elif isinstance(fixed_list, list):
-            parsed["fixed_departure"] = {
+        if isinstance(fixed_list, list):
+            parsed["fixed_departure"] = fixed_list
+        else:
+            parsed["fixed_departure"] = []
+
+        # Ensure customized is a single object
+        customized_obj = parsed.get("customized")
+        if isinstance(customized_obj, dict):
+            parsed["customized"] = customized_obj
+        else:
+            parsed["customized"] = {
                 "title": "",
                 "description": "",
-                "from_date": None,
-                "to_date": None,
-                "available_slots": 0,
                 "base_price": 0,
                 "discount": 0,
                 "final_price": 0,
@@ -215,30 +219,20 @@ def normalize_fixed_departure(data: str) -> dict:
                 "gst_percentage": 0
             }
 
-        # Flatten customized list to single object
-        customized_list = parsed.get("customized")
-        if isinstance(customized_list, list) and customized_list:
-            parsed["customized"] = customized_list[0]
-        elif isinstance(customized_list, list):
-            parsed["customized"] = None
-
         return parsed
     except Exception:
         return {
             "pricing_model": "fixed_departure",
-            "fixed_departure": {
+            "fixed_departure": [],
+            "customized": {
                 "title": "",
                 "description": "",
-                "from_date": None,
-                "to_date": None,
-                "available_slots": 0,
                 "base_price": 0,
                 "discount": 0,
                 "final_price": 0,
                 "booking_amount": 0,
                 "gst_percentage": 0
-            },
-            "customized": None
+            }
         }
 
 def serialize_trip(trip: Trip) -> dict:
