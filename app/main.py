@@ -1,4 +1,9 @@
-from fastapi import FastAPI, Depends,File, UploadFile, HTTPException,Request
+from datetime import datetime, timedelta
+from models.api_key import APIKey
+from models.user import User
+from core.database import get_db
+from schemas.user import LoginRequest, LoginResponse, UserStatus
+from fastapi import FastAPI, Depends,File, UploadFile, HTTPException,Request,status
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.status import HTTP_400_BAD_REQUEST
 from fastapi.staticfiles import StaticFiles
@@ -7,8 +12,11 @@ import shutil
 from fastapi.responses import JSONResponse
 from typing import List
 
+from jose import jwt, JWTError
+from passlib.context import CryptContext
 
 import os
+from sqlalchemy.orm import Session
 
 from api import trip_management
 from api import invoice
@@ -173,4 +181,51 @@ def upload_gallery_images(gallery_images: List[UploadFile] = File(...), request:
             saved_files.append(str(image_url))
 
     return {'message': 'Files uploaded', 'files': saved_files}
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+SECRET_KEY = "your-secret-key"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+@app.post("/login", response_model=LoginResponse)
+def login_user(request: LoginRequest, db: Session = Depends(get_db)):
+    normalized_email = request.email.lower()
+    user = db.query(User).filter(User.email == normalized_email).first()
+
+    if not user or not verify_password(request.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+
+    if user.status != UserStatus.Active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not active")
+
+    # Get active API key if exists
+    api_key_obj = db.query(APIKey).filter(
+        APIKey.user_id == user.id,
+        APIKey.is_active == True
+    ).order_by(APIKey.created_at.desc()).first()
+
+    token_data = {
+        "sub": str(user.id),
+        "email": user.email,
+        "tenant_id": str(user.tenant_id),
+        "role": user.role.name
+    }
+    access_token = create_access_token(data=token_data)
+
+    return LoginResponse(
+        access_token=access_token,
+        api_key=api_key_obj.key_value if api_key_obj else None
+    )
+
 

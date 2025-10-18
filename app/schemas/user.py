@@ -66,3 +66,13 @@ class UserOut(BaseModel):
 class UserWithKey(BaseModel):
     user: UserOut
     api_key: APIKeyOut
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    api_key: str | None = None
