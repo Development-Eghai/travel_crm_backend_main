@@ -92,7 +92,7 @@ Here are the details you submitted:
 Our team will get back to you shortly with a customized itinerary and pricing.
 
 Warm regards,  
-Yaadigo Travel Team
+Indian Mountain Rovers Travel Team
 """)
 
     try:
@@ -130,7 +130,7 @@ Here are the details you provided:
 Our travel team will reach out to you shortly with personalized options.
 
 Warm regards,  
-Yaadigo Travel Team
+Indian Mountain Rovers Travel Team
 """)
 
     try:
@@ -165,7 +165,7 @@ Here are the details you provided:
 Our team will contact you shortly to confirm availability and next steps.
 
 Warm regards,  
-Yaadigo Travel Team
+Indian Mountain Rovers Travel Team
 """)
 
     try:
