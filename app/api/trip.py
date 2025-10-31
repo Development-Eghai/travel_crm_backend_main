@@ -26,7 +26,7 @@ def api_json_response_format(status: bool, message: str, error_code: int, data: 
 
 # ✅ List all trips with optional pagination
 @router.get("/", response_model=dict)
-def list_trips(skip: int = Query(0, ge=0), limit: int = Query(10, le=100), db: Session = Depends(get_db)) -> dict:
+def list_trips(skip: int = 0, limit: int = 1000, db: Session = Depends(get_db)) -> dict:
     try:
         trips = get_trips(db, skip=skip, limit=limit)
         return api_json_response_format(True, "Trips fetched successfully", 0, trips)
