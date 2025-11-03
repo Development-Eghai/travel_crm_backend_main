@@ -10,12 +10,13 @@ class Trip(Base):
     __tablename__ = "trips"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=True)
     title = Column(String(100), nullable=False)
     overview = Column(Text)
     destination_id = Column(Integer, nullable=False)
     destination_type = Column(String(50), nullable=False)
     # categories = Column(Text)  # comma-separated
-    category_id = Column(Integer, ForeignKey("categories.id"))
+    category_id = Column(Text)
     themes = Column(Text)      # comma-separated
     hotel_category = Column(Integer)
     pickup_location = Column(String(100))
@@ -43,7 +44,7 @@ class Trip(Base):
     media = relationship("TripMedia", uselist=False, back_populates="trip", cascade="all, delete-orphan")
     pricing = relationship("TripPricing", uselist=False, back_populates="trip", cascade="all, delete-orphan")
     policies = relationship("TripPolicy", back_populates="trip", cascade="all, delete-orphan")
-    category = relationship("Category", back_populates="trips", uselist=False)
+    # category = relationship("Category", back_populates="trips", uselist=False)
 
 # -------------------- Itinerary --------------------
 

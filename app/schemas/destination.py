@@ -23,6 +23,7 @@ class DestinationCreate(BaseModel):
     testimonial_ids: List[int]
     related_blog_ids: List[int]
     hero_banner_images: Optional[List[str]] = []
+    # user_id: int
 
 
 class CustomPackageOut(BaseModel):

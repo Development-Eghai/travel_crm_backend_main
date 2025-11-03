@@ -1,16 +1,27 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends,Header,HTTPException
 from sqlalchemy.orm import Session
 from schemas.trip_type import TripTypeCreate, TripTypeOut
 from models.trip_type import TripType
 from core.database import get_db
 from utils.response import api_json_response_format  # Adjust path if needed
+from models.api_key import APIKey
 
 router = APIRouter()
 
 @router.post("/")
-def create_trip_type(trip_type_in: TripTypeCreate, db: Session = Depends(get_db)):
+def create_trip_type(trip_type_in: TripTypeCreate, db: Session = Depends(get_db), x_api_key: str = Header(None)):
     try:
-        trip_type = TripType(**trip_type_in.model_dump())
+        if not x_api_key:
+            raise HTTPException(status_code=401, detail="x-api-key header missing")
+        
+        api_key_entry = db.query(APIKey).filter(APIKey.key_value == x_api_key).first()
+        if not api_key_entry:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+
+        user_id = api_key_entry.user_id
+        trip_type_data = trip_type_in.model_dump()
+        trip_type_data["user_id"] = user_id        
+        trip_type = TripType(**trip_type_data)
         db.add(trip_type)
         db.commit()
         db.refresh(trip_type)
@@ -19,9 +30,19 @@ def create_trip_type(trip_type_in: TripTypeCreate, db: Session = Depends(get_db)
         return api_json_response_format(False, f"Error creating trip type: {e}", 500, {})
 
 @router.get("/")
-def get_all_trip_types(db: Session = Depends(get_db)):
+def get_all_trip_types(db: Session = Depends(get_db), x_api_key: str = Header(None)):
     try:
-        trip_types = db.query(TripType).all()
+        if not x_api_key:
+            raise HTTPException(status_code=401, detail="x-api-key header missing")
+       
+        api_key_entry = db.query(APIKey).filter(APIKey.key_value == x_api_key).first()
+        if not api_key_entry:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+
+        user_id = api_key_entry.user_id
+        trip_types = db.query(TripType).filter(TripType.user_id == user_id).all()       
+
+        # trip_types = db.query(TripType).all()
         data = [TripTypeOut.model_validate(t).model_dump() for t in trip_types]
         return api_json_response_format(True, "Trip types retrieved successfully.", 200, data)
     except Exception as e:

@@ -18,17 +18,35 @@ class ItineraryOut(ItineraryItem):
 
 # -------------------- Pricing --------------------
 
-class FixedDeparture(BaseModel):
-    from_date: Optional[datetime]
-    to_date: Optional[datetime]
-    available_slots: Optional[int]
+class CostingPackage(BaseModel):
     title: Optional[str]
-    description: Optional[str]
     base_price: Optional[float]
     discount: Optional[float]
     final_price: Optional[float]
     booking_amount: Optional[float]
     gst_percentage: Optional[float]
+
+
+class FixedDeparture(BaseModel):
+    from_date: Optional[datetime]
+    to_date: Optional[datetime]
+    available_slots: Optional[int]
+    title: Optional[str] = None
+    description: Optional[str]
+    costingPackages: Optional[List[CostingPackage]] = []
+
+
+# class FixedDeparture(BaseModel):
+#     from_date: Optional[datetime]
+#     to_date: Optional[datetime]
+#     available_slots: Optional[int]
+#     title: Optional[str]
+#     description: Optional[str]
+#     base_price: Optional[float]
+#     discount: Optional[float]
+#     final_price: Optional[float]
+#     booking_amount: Optional[float]
+#     gst_percentage: Optional[float]
 
 class FixedDepartureOut(FixedDeparture):
     pass
@@ -76,11 +94,11 @@ class TripPolicyOut(TripPolicySchema):
 # -------------------- TripCreate --------------------
 
 class TripCreate(BaseModel):
-    title: Optional[str]
+    title: Optional[str]    
     overview: Optional[str]
     destination_id: Optional[int]
     destination_type: Optional[str]
-    category_id: Optional[int]
+    category_id: Optional[List[str]] = []
     themes: Optional[List[str]] = []
     hotel_category: Optional[int]
     pickup_location: Optional[str]
@@ -111,7 +129,7 @@ class TripOut(BaseModel):
     overview: Optional[str]
     destination_id: Optional[int]
     destination_type: Optional[str]
-    category_id: Optional[int]
+    category_id: Optional[List[str]] = []
     themes: Optional[List[str]] = []
     hotel_category: Optional[int]
     pickup_location: Optional[str]

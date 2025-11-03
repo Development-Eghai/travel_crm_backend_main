@@ -8,6 +8,7 @@ class Destination(Base):
     __tablename__ = "destinations"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer) 
     title = Column(String(100), nullable=False)
     subtitle = Column(String(255))
     destination_type = Column(String(50))  # Domestic / International

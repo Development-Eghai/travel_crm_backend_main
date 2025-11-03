@@ -6,6 +6,7 @@ class TripType(Base):
     __tablename__ = "trip_types"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False)
     name = Column(String(255), nullable=False)
     slug = Column(String(255), nullable=False)
     description = Column(Text)

@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends,Header,HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from schemas.category import CategoryCreate, CategoryOut
@@ -10,13 +10,25 @@ from models.trip import Trip
 from schemas.trip import TripOut
 from crud.trip import serialize_trip
 
+from models.api_key import APIKey
+
 router = APIRouter()
 
 @router.post("/")
-def create_category(category_in: CategoryCreate, db: Session = Depends(get_db)):
+def create_category(category_in: CategoryCreate, db: Session = Depends(get_db),x_api_key: str = Header(None)):
     try:
+        if not x_api_key:
+            raise HTTPException(status_code=401, detail="x-api-key header missing")
+
+        # 🔍 Get user_id from api_keys table
+        api_key_entry = db.query(APIKey).filter(APIKey.key_value == x_api_key).first()
+        if not api_key_entry:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+
+        user_id = int(api_key_entry.user_id)
         payload = category_in.model_dump()
         payload["image"] = json.dumps(payload.get("image", []))  # ✅ convert list to JSON string
+        payload["user_id"] = user_id
         category = Category(**payload)
         db.add(category)
         db.commit()
@@ -48,9 +60,19 @@ def get_category_by_id(category_id: int, db: Session = Depends(get_db)):
         return api_json_response_format(False, f"Error retrieving category: {e}", 500, {})
 
 @router.get("/")
-def get_all_categories(db: Session = Depends(get_db)):
+def get_all_categories(db: Session = Depends(get_db), x_api_key: str = Header(None)):
     try:
-        categories = db.query(Category).all()
+        if not x_api_key:
+            raise HTTPException(status_code=401, detail="x-api-key header missing")
+
+        # 🔍 Get user_id from api_keys table
+        api_key_entry = db.query(APIKey).filter(APIKey.key_value == x_api_key).first()
+        if not api_key_entry:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+
+        user_id = api_key_entry.user_id
+        # categories = db.query(Category).all()
+        categories = db.query(Category).filter(Category.user_id == user_id).all()
         data = [
             CategoryOut.model_validate({
                 **c.__dict__,

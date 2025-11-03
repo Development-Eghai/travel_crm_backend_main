@@ -46,7 +46,7 @@ def generate_image(image_input):
 # -------------------- Create --------------------
 
 
-def create_trip(db: Session, payload: TripCreate):
+def create_trip(db: Session, payload: TripCreate, user_id: int):
     # Check for duplicate slug
     if payload.slug:
         existing = db.query(Trip).filter(Trip.slug == payload.slug).first()
@@ -57,11 +57,14 @@ def create_trip(db: Session, payload: TripCreate):
 
     # Prepare base trip data
     trip_fields = payload.dict(exclude={"pricing", "policies", "itinerary"})
-    trip_fields["category_id"] = payload.category_id or None
+    trip_fields["category_id"] = ",".join(payload.category_id or []) 
     trip_fields["themes"] = ",".join(payload.themes or [])
     trip_fields["faqs"] = json.dumps(payload.faqs or [])
     trip_fields["gallery_images"] = json.dumps(payload.gallery_images or [])
     trip_fields["hero_image"] = payload.hero_image
+
+    trip_fields["user_id"] = user_id
+
 
     # Create Trip model instance
     trip_model = Trip(**trip_fields)
@@ -103,9 +106,10 @@ def create_trip(db: Session, payload: TripCreate):
 
 # -------------------- Read --------------------
 
-def get_trips(db: Session, skip: int = 0, limit: int = 10) -> list:
+def get_trips(db: Session, user_id: int, skip: int = 0, limit: int = 10) -> list:
     trips = (
         db.query(Trip)
+        .filter(Trip.user_id == user_id) 
         .order_by(Trip.created_at.desc())  # ✅ newest first
         .offset(skip)
         .limit(limit)
@@ -136,7 +140,7 @@ def update_trip(db: Session, trip_id: int, payload: TripCreate):
 
     # Update base fields
     trip_fields = payload.dict(exclude={"pricing", "policies", "itinerary"})
-    trip_fields["category_id"] = payload.category_id or None
+    trip_fields["category_id"] = ",".join(payload.category_id or []) 
     trip_fields["themes"] = ",".join(payload.themes or [])
     trip_fields["faqs"] = json.dumps(payload.faqs or [])
     trip_fields["gallery_images"] = json.dumps(payload.gallery_images or [])
@@ -242,7 +246,7 @@ def serialize_trip(trip: Trip) -> dict:
         "overview": trip.overview,
         "destination_id": trip.destination_id,
         "destination_type": trip.destination_type,
-        "category_id": trip.category_id,
+        "category_id": trip.category_id.split(",") if trip.category_id else [], 
         "themes": trip.themes.split(",") if trip.themes else [],
         "hotel_category": trip.hotel_category,
         "pickup_location": trip.pickup_location,

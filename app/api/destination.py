@@ -2,7 +2,7 @@ import json
 from typing import List
 
 from crud.trip import serialize_trip
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query,Header
 from sqlalchemy.orm import Session
 from schemas.destination import DestinationCreate, DestinationOut
 from models.destination import (
@@ -13,12 +13,24 @@ from core.database import get_db
 from utils.response import api_json_response_format
 
 from models.trip import Trip
+from models.api_key import APIKey
 
 router = APIRouter()
 
 @router.post("/")
-def create_destination(destination_in: DestinationCreate, db: Session = Depends(get_db)):
+def create_destination(destination_in: DestinationCreate, db: Session = Depends(get_db),x_api_key: str = Header(None)):
     try:
+
+        if not x_api_key:
+            raise HTTPException(status_code=401, detail="x-api-key header missing")
+
+        # 🔍 Get user_id from api_keys table
+        api_key_entry = db.query(APIKey).filter(APIKey.key_value == x_api_key).first()
+        if not api_key_entry:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+
+        user_id = int(api_key_entry.user_id)
+        
         slug = destination_in.slug or destination_in.title.lower().replace(" ", "-")
 
         destination = Destination(
@@ -29,7 +41,9 @@ def create_destination(destination_in: DestinationCreate, db: Session = Depends(
             slug=slug,
             overview=destination_in.overview,
             travel_guidelines=destination_in.travel_guidelines,
-            hero_banner_images=json.dumps(destination_in.hero_banner_images or [])
+            hero_banner_images=json.dumps(destination_in.hero_banner_images or []),
+            user_id=user_id
+
         )
 
         db.add(destination)
@@ -167,9 +181,23 @@ def get_destination_by_id(destination_id: int, db: Session = Depends(get_db)):
         return api_json_response_format(False, f"Error retrieving destination: {e}", 500, {})
 
 @router.get("/")
-def get_all_destinations(db: Session = Depends(get_db)):
+def get_all_destinations(db: Session = Depends(get_db), x_api_key: str = Header(None)):
     try:
-        destinations = db.query(Destination).all()
+
+        if not x_api_key:
+            raise HTTPException(status_code=401, detail="x-api-key header missing")
+
+        # 🔍 Get user_id from api_keys table
+        api_key_entry = db.query(APIKey).filter(APIKey.key_value == x_api_key).first()
+        if not api_key_entry:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+
+        user_id = api_key_entry.user_id
+        print("DDDDDDDDDDDDDDDDd ",user_id)
+
+        # destinations = db.query(Destination).all()
+        destinations = db.query(Destination).filter(Destination.user_id == user_id).all()
+
 
         data = []
         for destination in destinations:
