@@ -26,7 +26,7 @@ def api_json_response_format(status: bool, message: str, error_code: int, data: 
 
 # ✅ List all trips with optional pagination
 @router.get("/", response_model=dict)
-def list_trips(skip: int = Query(0, ge=0), limit: int = Query(10, le=100), db: Session = Depends(get_db), x_api_key: str = Header(None)) -> dict:
+def list_trips(skip: int = Query(0, ge=0), limit: int = Query(1000, le=1000), db: Session = Depends(get_db), x_api_key: str = Header(None)) -> dict:
     try:
         if not x_api_key:
             raise HTTPException(status_code=401, detail="x-api-key header missing")

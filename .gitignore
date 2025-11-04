@@ -1,2 +1,55 @@
+# --- Python build and cache files ---
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+*.log
+
+# --- Virtual environments ---
+venv/
+env/
+.venv/
+ENV/
+
+# --- IDEs and editors ---
+.vscode/
+.idea/
+*.code-workspace
+
+# --- OS-specific files ---
+.DS_Store
+Thumbs.db
+
+# --- Compiled / temporary files ---
+*.so
+*.dll
+*.exe
+*.bak
+*.tmp
+
+# --- FastAPI & Uvicorn runtime files ---
+*.db
+*.sqlite3
+
+# --- Migrations (if Alembic) ---
+alembic.ini
+migrations/versions/*.pyc
+
+# --- Environment files ---
+.env
+.env.*
+
+# --- Node or frontend build folders (if mixed repo) ---
+node_modules/
+dist/
+build/
+
+# --- Docker files (optional ignore if generated) ---
+*.pid
+*.sock
+
+# --- Backup files ---
+*~

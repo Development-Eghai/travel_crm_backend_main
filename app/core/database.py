@@ -13,8 +13,7 @@ try:
     # DATABASE_URL = f"mysql://root:utsWPdbeqUHFGnFVlZohvRXDdmePdeMG@turntable.proxy.rlwy.net:31471/railway"
     # DATABASE_URL = "mysql://root:examplepassword@db:3306/travelcrm"
 
-    DATABASE_URL = f"mysql://root:PixelAdvant%40123@localhost:3306/travel_crm"
-
+    DATABASE_URL = f"mysql+pymysql://root:examplepassword@72.60.202.179:3306/travelcrm"
 
     if not DATABASE_URL:
         raise ValueError("DATABASE_URL is missing or empty")
