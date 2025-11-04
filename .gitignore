@@ -34,22 +34,40 @@ Thumbs.db
 *.db
 *.sqlite3
 
-# --- Migrations (if Alembic) ---
+# --- Migrations ---
 alembic.ini
 migrations/versions/*.pyc
 
 # --- Environment files ---
 .env
 .env.*
+.envrc
 
-# --- Node or frontend build folders (if mixed repo) ---
+# --- Node / frontend build (if any integrated repo) ---
 node_modules/
 dist/
 build/
 
-# --- Docker files (optional ignore if generated) ---
+# --- Docker / runtime ---
 *.pid
 *.sock
+*.tar
+docker-compose.override.yml
 
-# --- Backup files ---
+# --- Backups ---
 *~
+*.sql
+*.sql.gz
+travelcrm_backup.sql
+
+# --- Uploads (optional, keep only if not version-controlled) ---
+app/uploads/
+
+# --- SSL / Nginx certs ---
+nginx/
+nginx-certs/
+nginx-vhost/
+nginx-html/
+
+# --- Misc ---
+__debug_bin__
