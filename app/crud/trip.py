@@ -1,27 +1,33 @@
 import base64
 import os
-from datetime import datetime
 import io
 import json
+import uuid
+from datetime import datetime
 from PIL import Image
+from typing import List
+from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
+
 from models.trip import Itinerary, Trip, TripMedia, TripPolicy, TripPricing
 from schemas.trip import TripCreate
-from fastapi import HTTPException
-import uuid
-from sqlalchemy import or_ # <--- ADDED IMPORT for OR logic
-from typing import List # <--- ADDED IMPORT for type hinting
 
 # -------------------- Slug Generator --------------------
+
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 
 def generate_unique_slug(db: Session, base_slug: str) -> str:
     existing = db.query(Trip).filter(Trip.slug == base_slug).first()
     if not existing:
         return base_slug
     return f"{base_slug}-{uuid.uuid4().hex[:6]}"
+
+
+# -------------------- Image Handling --------------------
 
 def generate_image(image_input):
     """
@@ -38,45 +44,49 @@ def generate_image(image_input):
         raise ValueError("Invalid image input type. Must be base64 string or bytes.")
 
     image = Image.open(io.BytesIO(image_data))
-
     file_name = f"{datetime.now().strftime('%Y%m%d%H%M%S')}.webp"
     file_path = os.path.join(UPLOAD_DIR, file_name)
-
     image.save(file_path, format="WEBP", quality=85)
 
     return file_path
+
+
 # -------------------- Create --------------------
 
-
 def create_trip(db: Session, payload: TripCreate, user_id: int):
-    # Check for duplicate slug
+    # Ensure unique slug
     if payload.slug:
         existing = db.query(Trip).filter(Trip.slug == payload.slug).first()
         if existing:
             payload.slug = generate_unique_slug(db, payload.slug)
 
-    
-
-    # Prepare base trip data
+    # Prepare Trip Base Data
     trip_fields = payload.dict(exclude={"pricing", "policies", "itinerary"})
-    trip_fields["category_id"] = ",".join(payload.category_id or []) 
+    trip_fields["category_id"] = ",".join(payload.category_id or [])
     trip_fields["themes"] = ",".join(payload.themes or [])
     trip_fields["faqs"] = json.dumps(payload.faqs or [])
     trip_fields["gallery_images"] = json.dumps(payload.gallery_images or [])
     trip_fields["hero_image"] = payload.hero_image
-
     trip_fields["user_id"] = user_id
 
-
-    # Create Trip model instance
+    # Create Trip Entry
     trip_model = Trip(**trip_fields)
     db.add(trip_model)
     db.commit()
     db.refresh(trip_model)
 
-    # Add Pricing
+    # ---- Add Pricing ----
     if payload.pricing:
-        pricing_data = jsonable_encoder(payload.pricing) if hasattr(payload.pricing, "dict") else payload.pricing
+        pricing_data = jsonable_encoder(payload.pricing)
+        # ✅ Validate costingPackages not empty before saving
+        if (
+            pricing_data.get("pricing_model") == "fixed_departure"
+            and isinstance(pricing_data.get("fixed_departure"), list)
+        ):
+            for fd in pricing_data["fixed_departure"]:
+                if not fd.get("costingPackages"):
+                    raise HTTPException(status_code=400, detail="costingPackages cannot be empty")
+
         pricing_model = TripPricing(
             trip_id=trip_model.id,
             pricing_model=pricing_data.get("pricing_model"),
@@ -84,14 +94,14 @@ def create_trip(db: Session, payload: TripCreate, user_id: int):
         )
         db.add(pricing_model)
 
-    # Add Policies
+    # ---- Add Policies ----
     if payload.policies:
         for policy in payload.policies:
             policy_data = policy.dict() if hasattr(policy, "dict") else policy
             policy_model = TripPolicy(trip_id=trip_model.id, **policy_data)
             db.add(policy_model)
 
-    # Add Itinerary
+    # ---- Add Itinerary ----
     if payload.itinerary:
         for day in payload.itinerary:
             day_data = day.dict() if hasattr(day, "dict") else day
@@ -102,44 +112,30 @@ def create_trip(db: Session, payload: TripCreate, user_id: int):
             db.add(itinerary_model)
 
     db.commit()
-
     return trip_model
 
 
 # -------------------- Read --------------------
 
-# MODIFIED FUNCTION SIGNATURE to accept category_ids
 def get_trips(db: Session, user_id: int, skip: int = 0, limit: int = 10, category_ids: List[int] = None) -> list:
-    query = db.query(Trip).filter(Trip.user_id == user_id) 
+    query = db.query(Trip).filter(Trip.user_id == user_id)
 
-    # --- ADDED FILTERING LOGIC for OR multi-category search ---
+    # Filter by multiple category IDs (OR logic)
     if category_ids and len(category_ids) > 0:
         filter_conditions = []
         for cat_id in category_ids:
             cat_str = str(cat_id)
-            
-            # Use OR logic with LIKE to match the comma-separated string
             filter_conditions.append(
                 or_(
-                    Trip.category_id == cat_str,        # Matches if the string is exactly the ID (e.g., '5')
-                    Trip.category_id.like(f"{cat_str},%"),   # Matches if it's the first ID (e.g., '5,10,1')
-                    Trip.category_id.like(f"%,{cat_str}"),   # Matches if it's the last ID (e.g., '10,1,5')
-                    Trip.category_id.like(f"%,{cat_str},%")  # Matches if it's an ID in the middle (e.g., '10,5,1')
+                    Trip.category_id == cat_str,
+                    Trip.category_id.like(f"{cat_str},%"),
+                    Trip.category_id.like(f"%,{cat_str}"),
+                    Trip.category_id.like(f"%,{cat_str},%")
                 )
             )
+        query = query.filter(or_(*filter_conditions))
 
-        if filter_conditions:
-            # Apply all category conditions using the SQLAlchemy OR operator
-            query = query.filter(or_(*filter_conditions))
-    # --- END ADDED FILTERING LOGIC ---
-    
-    trips = (
-        query
-        .order_by(Trip.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    trips = query.order_by(Trip.created_at.desc()).offset(skip).limit(limit).all()
     return [serialize_trip(t) for t in trips]
 
 
@@ -148,24 +144,22 @@ def get_trip_by_id(db: Session, trip_id: int) -> dict:
     return serialize_trip(trip) if trip else None
 
 
-
 # -------------------- Update --------------------
 
 def update_trip(db: Session, trip_id: int, payload: TripCreate):
-    # Check for slug conflict
+    # Unique slug check
     if payload.slug:
         existing_slug = db.query(Trip).filter(Trip.slug == payload.slug, Trip.id != trip_id).first()
         if existing_slug:
             payload.slug = generate_unique_slug(db, payload.slug)
 
-    # Fetch existing trip
     trip_model = db.query(Trip).filter(Trip.id == trip_id).first()
     if not trip_model:
         raise HTTPException(status_code=404, detail="Trip not found.")
 
-    # Update base fields
+    # Update core fields
     trip_fields = payload.dict(exclude={"pricing", "policies", "itinerary"})
-    trip_fields["category_id"] = ",".join(payload.category_id or []) 
+    trip_fields["category_id"] = ",".join(payload.category_id or [])
     trip_fields["themes"] = ",".join(payload.themes or [])
     trip_fields["faqs"] = json.dumps(payload.faqs or [])
     trip_fields["gallery_images"] = json.dumps(payload.gallery_images or [])
@@ -177,16 +171,20 @@ def update_trip(db: Session, trip_id: int, payload: TripCreate):
     # Update Pricing
     if payload.pricing:
         pricing_data = jsonable_encoder(payload.pricing)
+        if (
+            pricing_data.get("pricing_model") == "fixed_departure"
+            and isinstance(pricing_data.get("fixed_departure"), list)
+        ):
+            for fd in pricing_data["fixed_departure"]:
+                if not fd.get("costingPackages"):
+                    raise HTTPException(status_code=400, detail="costingPackages cannot be empty")
+
         pricing_json = json.dumps(pricing_data)
         if trip_model.pricing:
             trip_model.pricing.pricing_model = pricing_data.get("pricing_model")
             trip_model.pricing.data = pricing_json
         else:
-            db.add(TripPricing(
-                trip_id=trip_model.id,
-                pricing_model=pricing_data.get("pricing_model"),
-                data=pricing_json
-            ))
+            db.add(TripPricing(trip_id=trip_model.id, pricing_model=pricing_data.get("pricing_model"), data=pricing_json))
 
     # Replace Policies
     if payload.policies is not None:
@@ -220,49 +218,44 @@ def delete_trip(db: Session, trip_id: int) -> dict:
     db.commit()
     return {"message": f"Trip '{trip.title}' deleted successfully"}
 
+
 # -------------------- Serializer --------------------
 
 def normalize_fixed_departure(data: str) -> dict:
+    """
+    Safely parse pricing JSON and guarantee valid structure.
+    """
     try:
         parsed = json.loads(data)
-
-        # Ensure fixed_departure is a list of objects
-        fixed_list = parsed.get("fixed_departure")
-        if isinstance(fixed_list, list):
-            parsed["fixed_departure"] = fixed_list
-        else:
+        # Ensure fixed_departure list exists
+        if not isinstance(parsed.get("fixed_departure"), list):
             parsed["fixed_departure"] = []
-
-        # Ensure customized is a single object
-        customized_obj = parsed.get("customized")
-        if isinstance(customized_obj, dict):
-            parsed["customized"] = customized_obj
         else:
+            # Ensure costingPackages exists for each
+            for fd in parsed["fixed_departure"]:
+                if "costingPackages" not in fd:
+                    fd["costingPackages"] = []
+        # Ensure customized block exists
+        if not isinstance(parsed.get("customized"), dict):
             parsed["customized"] = {
-                "title": "",
-                "description": "",
+                "pricing_type": "",
                 "base_price": 0,
                 "discount": 0,
-                "final_price": 0,
-                "booking_amount": 0,
-                "gst_percentage": 0
+                "final_price": 0
             }
-
         return parsed
     except Exception:
         return {
             "pricing_model": "fixed_departure",
             "fixed_departure": [],
             "customized": {
-                "title": "",
-                "description": "",
+                "pricing_type": "",
                 "base_price": 0,
                 "discount": 0,
-                "final_price": 0,
-                "booking_amount": 0,
-                "gst_percentage": 0
+                "final_price": 0
             }
         }
+
 
 def serialize_trip(trip: Trip) -> dict:
     return {
@@ -271,7 +264,7 @@ def serialize_trip(trip: Trip) -> dict:
         "overview": trip.overview,
         "destination_id": trip.destination_id,
         "destination_type": trip.destination_type,
-        "category_id": trip.category_id.split(",") if trip.category_id else [], 
+        "category_id": trip.category_id.split(",") if trip.category_id else [],
         "themes": trip.themes.split(",") if trip.themes else [],
         "hotel_category": trip.hotel_category,
         "pickup_location": trip.pickup_location,
@@ -292,23 +285,8 @@ def serialize_trip(trip: Trip) -> dict:
         "updated_at": trip.updated_at,
         "hero_image": trip.hero_image,
         "gallery_images": json.loads(trip.gallery_images) if trip.gallery_images else [],
-
-        # "media": {
-        #     "hero_image_url": trip.media.hero_image_url if trip.media else None,
-        #     "thumbnail_url": trip.media.thumbnail_url if trip.media else None,
-        #     "gallery_urls": trip.media.gallery_urls.split(",") if trip.media and trip.media.gallery_urls else []
-        # } if trip.media else None,
-
         "pricing": normalize_fixed_departure(trip.pricing.data) if trip.pricing else None,
-
-
-        "policies": [
-            {
-                "title": p.title,
-                "content": p.content
-            } for p in trip.policies
-        ] if trip.policies else [],
-
+        "policies": [{"title": p.title, "content": p.content} for p in trip.policies] if trip.policies else [],
         "itinerary": [
             {
                 "day_number": i.day_number,
@@ -318,6 +296,7 @@ def serialize_trip(trip: Trip) -> dict:
                 "activities": i.activities.split(",") if i.activities else [],
                 "hotel_name": i.hotel_name,
                 "meal_plan": i.meal_plan.split(",") if i.meal_plan else []
-            } for i in trip.itinerary
+            }
+            for i in trip.itinerary
         ] if trip.itinerary else []
     }

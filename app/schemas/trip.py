@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, field_validator
 from typing import List, Optional, Literal
 from datetime import datetime
 
@@ -16,40 +16,37 @@ class ItineraryItem(BaseModel):
 class ItineraryOut(ItineraryItem):
     pass
 
+
 # -------------------- Pricing --------------------
 
 class CostingPackage(BaseModel):
-    title: Optional[str]
-    base_price: Optional[float]
-    discount: Optional[float]
-    final_price: Optional[float]
-    booking_amount: Optional[float]
-    gst_percentage: Optional[float]
+    title: str
+    base_price: float
+    discount: float
+    final_price: float
+    booking_amount: float
+    gst_percentage: float
 
 
 class FixedDeparture(BaseModel):
-    from_date: Optional[datetime]
-    to_date: Optional[datetime]
-    available_slots: Optional[int]
+    from_date: datetime
+    to_date: datetime
+    available_slots: int
     title: Optional[str] = None
-    description: Optional[str]
-    costingPackages: Optional[List[CostingPackage]] = []
+    description: Optional[str] = None
+    costingPackages: List[CostingPackage]
 
+    # ✅ Validator to ensure non-empty costingPackages
+    @field_validator("costingPackages")
+    def costing_packages_not_empty(cls, v):
+        if not v or len(v) == 0:
+            raise ValueError("costingPackages cannot be empty")
+        return v
 
-# class FixedDeparture(BaseModel):
-#     from_date: Optional[datetime]
-#     to_date: Optional[datetime]
-#     available_slots: Optional[int]
-#     title: Optional[str]
-#     description: Optional[str]
-#     base_price: Optional[float]
-#     discount: Optional[float]
-#     final_price: Optional[float]
-#     booking_amount: Optional[float]
-#     gst_percentage: Optional[float]
 
 class FixedDepartureOut(FixedDeparture):
     pass
+
 
 class CustomizedPricing(BaseModel):
     pricing_type: Optional[str]
@@ -57,8 +54,10 @@ class CustomizedPricing(BaseModel):
     discount: Optional[float]
     final_price: Optional[float]
 
-class customizedOut(CustomizedPricing):
+
+class CustomizedOut(CustomizedPricing):
     pass
+
 
 class TripPricingSchema(BaseModel):
     pricing_model: Optional[Literal["fixed_departure", "customized"]]
@@ -77,10 +76,12 @@ class TripPricingSchema(BaseModel):
             model_instance.fixed_departure = None
         return model_instance
 
+
 class TripPricingOut(BaseModel):
     pricing_model: Optional[str]
     fixed_departure: Optional[List[FixedDepartureOut]] = []
-    customized: Optional[customizedOut] = None
+    customized: Optional[CustomizedOut] = None
+
 
 # -------------------- Policies --------------------
 
@@ -88,13 +89,15 @@ class TripPolicySchema(BaseModel):
     title: Optional[str]
     content: Optional[str]
 
+
 class TripPolicyOut(TripPolicySchema):
     pass
+
 
 # -------------------- TripCreate --------------------
 
 class TripCreate(BaseModel):
-    title: Optional[str]    
+    title: Optional[str]
     overview: Optional[str]
     destination_id: Optional[int]
     destination_type: Optional[str]
@@ -120,6 +123,7 @@ class TripCreate(BaseModel):
     itinerary: Optional[List[ItineraryItem]] = []
     pricing: Optional[TripPricingSchema]
     policies: Optional[List[TripPolicySchema]] = []
+
 
 # -------------------- TripOut --------------------
 
