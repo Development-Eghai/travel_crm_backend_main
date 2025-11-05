@@ -9,8 +9,8 @@ from utils.response import api_json_response_format
 from models.trip import Trip
 from schemas.trip import TripOut
 from crud.trip import serialize_trip
-
 from models.api_key import APIKey
+from sqlalchemy import or_ # <--- CRITICAL IMPORT: Needed for flexible filtering
 
 router = APIRouter()
 
@@ -124,7 +124,21 @@ def delete_category(category_id: int, db: Session = Depends(get_db)):
 @router.get("/trip_details/{category_id}")
 def get_trip_details(category_id: int, db: Session = Depends(get_db)):
     try:
-        trip_details = db.query(Trip).filter(Trip.category_id == category_id).all()
+        cat_str = str(category_id)
+        
+        # --- CRITICAL FIX APPLIED HERE ---
+        # This uses LIKE with wildcards to correctly find the category ID 
+        # within the comma-separated string, supporting single, start, middle, and end positions.
+        filter_condition = or_(
+            Trip.category_id == cat_str,         # Case 1: Exact match ('5')
+            Trip.category_id.like(f"{cat_str},%"),    # Case 2: Starts with ID ('5,2')
+            Trip.category_id.like(f"%,{cat_str}"),    # Case 3: Ends with ID ('2,5')
+            Trip.category_id.like(f"%,{cat_str},%")   # Case 4: ID is in the middle ('2,5,1')
+        )
+        
+        trip_details = db.query(Trip).filter(filter_condition).all()
+        # --- END CRITICAL FIX ---
+        
         data = [serialize_trip(t) for t in trip_details]
         return api_json_response_format(True, "Trip details retrieved successfully.", 200, data)
     except Exception as e:
