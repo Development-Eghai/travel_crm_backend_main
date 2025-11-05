@@ -10,6 +10,8 @@ from models.trip import Itinerary, Trip, TripMedia, TripPolicy, TripPricing
 from schemas.trip import TripCreate
 from fastapi import HTTPException
 import uuid
+from sqlalchemy import or_ # <--- ADDED IMPORT for OR logic
+from typing import List # <--- ADDED IMPORT for type hinting
 
 # -------------------- Slug Generator --------------------
 UPLOAD_DIR = "uploads"
@@ -106,11 +108,34 @@ def create_trip(db: Session, payload: TripCreate, user_id: int):
 
 # -------------------- Read --------------------
 
-def get_trips(db: Session, user_id: int, skip: int = 0, limit: int = 10) -> list:
+# MODIFIED FUNCTION SIGNATURE to accept category_ids
+def get_trips(db: Session, user_id: int, skip: int = 0, limit: int = 10, category_ids: List[int] = None) -> list:
+    query = db.query(Trip).filter(Trip.user_id == user_id) 
+
+    # --- ADDED FILTERING LOGIC for OR multi-category search ---
+    if category_ids and len(category_ids) > 0:
+        filter_conditions = []
+        for cat_id in category_ids:
+            cat_str = str(cat_id)
+            
+            # Use OR logic with LIKE to match the comma-separated string
+            filter_conditions.append(
+                or_(
+                    Trip.category_id == cat_str,        # Matches if the string is exactly the ID (e.g., '5')
+                    Trip.category_id.like(f"{cat_str},%"),   # Matches if it's the first ID (e.g., '5,10,1')
+                    Trip.category_id.like(f"%,{cat_str}"),   # Matches if it's the last ID (e.g., '10,1,5')
+                    Trip.category_id.like(f"%,{cat_str},%")  # Matches if it's an ID in the middle (e.g., '10,5,1')
+                )
+            )
+
+        if filter_conditions:
+            # Apply all category conditions using the SQLAlchemy OR operator
+            query = query.filter(or_(*filter_conditions))
+    # --- END ADDED FILTERING LOGIC ---
+    
     trips = (
-        db.query(Trip)
-        .filter(Trip.user_id == user_id) 
-        .order_by(Trip.created_at.desc())  # ✅ newest first
+        query
+        .order_by(Trip.created_at.desc())
         .offset(skip)
         .limit(limit)
         .all()
