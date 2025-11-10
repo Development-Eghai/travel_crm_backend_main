@@ -15,6 +15,7 @@ class EnquireFormCreate(BaseModel):
     contact_number: str = Field(..., max_length=20)
     email: EmailStr
     additional_comments: Optional[str] = None
+    domain_name: Optional[str] = None  
 
 class EnquireFormOut(BaseModel):
     id: int
@@ -34,4 +35,3 @@ class EnquireFormOut(BaseModel):
 
     class Config:
         from_attributes = True  # ✅ Enables ORM model parsing
-

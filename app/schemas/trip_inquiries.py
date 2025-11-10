@@ -11,6 +11,7 @@ class TripInquiryCreate(BaseModel):
     full_name: str
     email: EmailStr
     phone_number: str
+    domain_name: Optional[str] = None  
 
 class TripInquiryOut(BaseModel):
     id: int

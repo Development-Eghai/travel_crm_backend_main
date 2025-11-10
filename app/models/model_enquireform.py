@@ -14,6 +14,7 @@ class EnquireForm(Base):
     __tablename__ = "enquire_form"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, default=0) 
     destination = Column(String(100), nullable=False)
     departure_city = Column(String(100), nullable=False)
     travel_date = Column(String(50), nullable=False)
@@ -30,5 +31,3 @@ class EnquireForm(Base):
 
     def __repr__(self):
         return f"<EnquireForm(id={self.id}, name='{self.full_name}', destination='{self.destination}')>"
-
-

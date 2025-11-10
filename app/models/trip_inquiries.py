@@ -6,6 +6,7 @@ class TripInquiry(Base):
     __tablename__ = "trip_inquiries"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, default=0)     
     departure_date = Column(String(50), nullable=False)
     adults = Column(Integer, default=1)
     children = Column(Integer, default=0)

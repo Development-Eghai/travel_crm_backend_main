@@ -6,6 +6,7 @@ class BookingRequest(Base):
     __tablename__ = "booking_requests"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, default=0) 
     departure_date = Column(String(50), nullable=False)
     sharing_option = Column(String(50), nullable=False)  # e.g., Double, Triple, Quad
     price_per_person = Column(Integer, nullable=False)

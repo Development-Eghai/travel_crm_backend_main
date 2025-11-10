@@ -39,6 +39,8 @@ secure_app = FastAPI(
 )
 
 
+
+
 # origins = [
 #     "http://localhost:5173",
 # ]
@@ -83,6 +85,13 @@ secure_app.include_router(trip.router, prefix="/api/trips", tags=["Trips"])
 secure_app.include_router(destination.router, prefix="/api/destinations", tags=["Destinations"])
 secure_app.include_router(trip_management.router, prefix="/api/trip-management", tags=["Trip Management"])
 
+secure_app.include_router(trip_inquiry_router, prefix="/api/trip_enquires", tags=["Trip Enquires"])
+secure_app.include_router(booking_router, prefix="/api/booking_request", tags=["Booking Requests"])
+secure_app.include_router(enquire_router,prefix="/api/enquires", tags=["Enquires"])
+
+
+# secure_app.include_router(trip_inquiry_router, prefix="/api/trip_enquires", tags=["Trip Enquires"])
+
 
 
 # 🧑‍💼 Public app for user registration/login
@@ -103,8 +112,8 @@ public_app.add_middleware(
 
 public_app.include_router(user_router, prefix="/api/users", tags=["Users"])
 public_app.include_router(enquire_router,prefix="/api/enquires", tags=["Enquires"])
-public_app.include_router(booking_router, prefix="/api/booking_request", tags=["Booking Requests"])
-public_app.include_router(trip_inquiry_router, prefix="/api/trip_enquires", tags=["Trip Enquires"])
+# public_app.include_router(booking_router, prefix="/api/booking_request", tags=["Booking Requests"])
+# public_app.include_router(trip_inquiry_router, prefix="/api/trip_enquires", tags=["Trip Enquires"])
 
 
 try:
@@ -201,7 +210,8 @@ def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
 @app.post("/login", response_model=LoginResponse)
 def login_user(request: LoginRequest, db: Session = Depends(get_db)):
     normalized_email = request.email.lower()
-    user = db.query(User).filter(User.email == normalized_email).first()
+    domain_name = request.domain_name
+    user = db.query(User).filter(User.email == normalized_email, User.website == domain_name).first()
 
     if not user or not verify_password(request.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
@@ -222,6 +232,7 @@ def login_user(request: LoginRequest, db: Session = Depends(get_db)):
         "role": user.role.name
     }
     access_token = create_access_token(data=token_data)
+    
 
     return LoginResponse(
         access_token=access_token,
@@ -229,3 +240,19 @@ def login_user(request: LoginRequest, db: Session = Depends(get_db)):
     )
 
 
+@app.post("/admin_login", response_model=LoginResponse)
+def admin_login(request: LoginRequest):
+    email = request.email
+    password = request.password
+    if email == "sales@indianmountainrovers.com" and password == "IndianMountainRovers2511@":
+        token_data = {
+        "sub": str(1001),
+        "email": email,
+        "tenant_id": str(1234),
+        "role": "admin"   
+        }
+
+        access_token = create_access_token(data=token_data)
+        return LoginResponse(        access_token=access_token   )
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
