@@ -17,10 +17,15 @@ def create_booking(data: BookingRequestCreate, db: Session = Depends(get_db)):
         print(data.domain_name)
         user = db.query(User).filter(User.website == data.domain_name).first()
         if not user:
-            return api_json_response_format(False, "Invalid domain name — user not found.", 404, {})
+            return api_json_response_format(False, "Invalid domain name – user not found.", 404, {})
         print(user.id)
         user_id = user.id 
-        booking_data = data.dict(exclude={"domain_name"})
+        # FIX: Removed 'exclude={"domain_name"}' so that the domain_name is saved.
+        # Assuming Pydantic v2 is in use, otherwise use data.dict()
+        booking_data = data.model_dump() 
+        # If still on Pydantic v1, use:
+        # booking_data = data.dict()
+        
         booking = BookingRequest(user_id=user_id,**booking_data)
         db.add(booking)
         db.commit()

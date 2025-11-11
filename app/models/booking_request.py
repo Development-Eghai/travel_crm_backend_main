@@ -16,5 +16,8 @@ class BookingRequest(Base):
     full_name = Column(String(100), nullable=False)
     email = Column(String(100), nullable=False)
     phone_number = Column(String(20), nullable=False)
+    # FIX: Added domain_name column to the database model
+    domain_name = Column(String(100), nullable=True) 
+    # END FIX
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
