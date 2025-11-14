@@ -1,177 +1,128 @@
-import os
+# app/utils/email_utility.py
 import smtplib
 from email.message import EmailMessage
+from typing import Optional
+from utils.email_config import get_tenant_email_settings_by_api_key
 
-# load_dotenv()
-
-SMTP_HOST = "smtp.zoho.in"
-SMTP_PORT = 587
-ZOHO_USERNAME = "sales@indianmountainrovers.com" # Sender Email
-ZOHO_PASSWORD = "W5mSWcxnamrH"
-# ADMIN_EMAIL is set to ZOHO_USERNAME since this account is the admin mailbox.
-ADMIN_RECIPIENT = ZOHO_USERNAME 
-
-# --- NEW FUNCTION: Sends the beautiful admin notification ---
-def send_admin_enquiry_notification(enquiry_data: dict):
+def send_email_dynamic(to_email: str, subject: str, body: str, api_key: str) -> bool:
     """
-    Sends a new enquiry notification email to the admin/sales mailbox
-    (using the same Zoho credentials as the recipient).
+    Send an email using tenant SMTP settings found by api_key.
+    Returns True on success, False otherwise.
     """
-    
-    admin_msg = EmailMessage()
-    admin_msg["Subject"] = f"🌟 NEW CLIENT REQUEST: {enquiry_data.get('destination', 'Website Enquiry')}"
-    admin_msg["From"] = ZOHO_USERNAME
-    admin_msg["To"] = ADMIN_RECIPIENT # <-- Sending the notification to the same sales mailbox
-    
-    admin_msg.set_content(f"""
-    Hello Team,
+    if not api_key:
+        print("send_email_dynamic: missing api_key")
+        return False
 
-    You've got a **NEW CLIENT REQUEST**! 🎉
+    settings = get_tenant_email_settings_by_api_key(api_key)
+    if not settings:
+        print("send_email_dynamic: tenant SMTP config not found")
+        return False
 
-    A potential client, **{enquiry_data.get("full_name", "Guest")}**, has just submitted a trip enquiry. This is a hot lead—please follow up immediately!
+    smtp_host = settings.get("smtp_host")
+    smtp_port = settings.get("smtp_port", 587)
+    smtp_username = settings.get("smtp_username")
+    smtp_password = settings.get("smtp_password")
 
-    --- 🚀 Client & Trip Details ---
-    
-    **Destination:** {enquiry_data.get("destination", "N/A")}
-    **Travel Date:** {enquiry_data.get("travel_date", "N/A")}
-    **Departure City:** {enquiry_data.get("departure_city", "N/A")}
-    **Hotel Preference:** {enquiry_data.get("hotel_category", "N/A")}
+    if not smtp_host or not smtp_username or not smtp_password:
+        print("send_email_dynamic: incomplete SMTP configuration for tenant:", settings)
+        return False
 
-    **Travelers:**
-    - Adults: {enquiry_data.get("adults", 0)}
-    - Children: {enquiry_data.get("children", 0)}
-    - Infants: {enquiry_data.get("infants", 0)}
-
-    **Contact Information:**
-    - **Name:** {enquiry_data.get("full_name", "N/A")}
-    - **Email:** {enquiry_data.get("email", "N/A")}
-    - **Phone:** {enquiry_data.get("contact_number", "N/A")}
-
-    **Additional Comments:**
-    {enquiry_data.get("additional_comments", "None")}
-
-    --------------------------
-    Action Required: Contact the client now to convert this lead!
-    
-    Best regards,
-    Indian Mountain Rovers System Alerts
-    """)
-
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.starttls()
-            server.login(ZOHO_USERNAME, ZOHO_PASSWORD)
-            server.send_message(admin_msg)
-            print(f"Admin notification sent to {ADMIN_RECIPIENT}")
-    except Exception as e:
-        print(f"Admin email notification failed to send: {e}")
-
-
-# --- MODIFIED FUNCTION: Now calls the admin function ---
-def send_enquiry_email(enquiry_data: dict):
     msg = EmailMessage()
-    msg["Subject"] = f"Your Kerala trip enquiry confirmation"
-    msg["From"] = ZOHO_USERNAME
-    msg["To"] = enquiry_data.get("email", "support@yourdomain.com")
-
-    msg.set_content(f"""
-Hi {enquiry_data.get("full_name", "Guest")},
-
-Thank time you for your enquiry about traveling to {enquiry_data.get("destination", "your selected destination")}!
-
-Here are the details you submitted:
-- Departure City: {enquiry_data.get("departure_city", "N/A")}
-- Travel Date: {enquiry_data.get("travel_date", "N/A")}
-- Adults: {enquiry_data.get("adults", 0)}
-- Children: {enquiry_data.get("children", 0)}
-- Infants: {enquiry_data.get("infants", 0)}
-- Hotel Category: {enquiry_data.get("hotel_category", "N/A")}
-- Contact Number: {enquiry_data.get("contact_number", "N/A")}
-- Additional Comments: {enquiry_data.get("additional_comments", "None")}
-
-Our team will get back to you shortly with a customized itinerary and pricing.
-
-Warm regards,  
-Indian Mountain Rovers Travel Team
-""")
+    msg["Subject"] = subject
+    msg["From"] = smtp_username
+    msg["To"] = to_email
+    msg.set_content(body)
 
     try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
             server.starttls()
-            server.login(ZOHO_USERNAME, ZOHO_PASSWORD)
+            server.login(smtp_username, smtp_password)
             server.send_message(msg)
+        return True
     except Exception as e:
-        print("Email sending failed for user confirmation:", e)
-
-    # 🚨 CRITICAL CHANGE: Call the new admin function after sending the user email
-    send_admin_enquiry_notification(enquiry_data)
+        print("send_email_dynamic: failed to send:", e)
+        return False
 
 
-# --- UNCHANGED FUNCTIONS ---
-def send_trip_inquiry_email(inquiry: dict):
-    print("Sending email to:", inquiry.get("email"))
-    msg = EmailMessage()
-    msg["Subject"] = "Your Trip Inquiry Confirmation"
-    msg["From"] = ZOHO_USERNAME
-    msg["To"] = inquiry.get("email", "support@yourdomain.com")
+# Convenience wrappers for your app to call
+def send_enquiry_email(enquiry_data: dict, api_key: str) -> bool:
+    # customer confirmation
+    customer_email = enquiry_data.get("email")
+    subject_user = f"Thank you for your enquiry - {enquiry_data.get('destination','')}"
+    body_user = f"""Hi {enquiry_data.get('full_name','Guest')},
 
-    msg.set_content(f"""
-Hi {inquiry.get("full_name", "Guest")},
+Thank you for your enquiry about {enquiry_data.get('destination','your selected destination')}.
+We received your request and our team will contact you soon.
 
-Thank you for submitting your trip inquiry! We're excited to help you plan your journey.
+Regards,
+{enquiry_data.get('company_name','Team')}
+"""
+    sent = False
+    if customer_email:
+        sent = send_email_dynamic(customer_email, subject_user, body_user, api_key) or sent
 
-Here are the details you provided:
-- Departure Date: {inquiry.get("departure_date", "N/A")}
-- Adults: {inquiry.get("adults", 0)}
-- Children: {inquiry.get("children", 0)}
-- Children's Ages: {', '.join(map(str, inquiry.get("children_ages", [])))}
-- Phone Number: {inquiry.get("phone_number", "N/A")}
+    # admin notification
+    settings = get_tenant_email_settings_by_api_key(api_key)
+    admin_email = settings.get("admin_email") if settings else None
+    subject_admin = f"New enquiry: {enquiry_data.get('destination','')}"
+    body_admin = f"""
+New enquiry received:
 
-Our travel team will reach out to you shortly with personalized options.
+Name: {enquiry_data.get('full_name')}
+Email: {enquiry_data.get('email')}
+Phone: {enquiry_data.get('contact_number')}
+Destination: {enquiry_data.get('destination')}
+Comments: {enquiry_data.get('additional_comments')}
+"""
+    if admin_email:
+        sent = send_email_dynamic(admin_email, subject_admin, body_admin, api_key) or sent
 
-Warm regards,  
-Indian Mountain Rovers Travel Team
-""")
-
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.starttls()
-            server.login(ZOHO_USERNAME, ZOHO_PASSWORD)
-            server.send_message(msg)
-    except Exception as e:
-        print("Email sending failed:", e) 
+    return sent
 
 
-def send_booking_email(booking: dict):
-    msg = EmailMessage()
-    msg["Subject"] = "Your Booking Confirmation"
-    msg["From"] = ZOHO_USERNAME
-    msg["To"] = booking.get("email", "support@yourdomain.com")
+def send_booking_email(booking: dict, api_key: str) -> bool:
+    # customer confirmation
+    customer_email = booking.get("email")
+    subject_user = "Booking received"
+    body_user = f"Hello {booking.get('full_name')},\n\nThanks — we received your booking request."
 
-    msg.set_content(f"""
-Hi {booking.get("full_name", "Guest")},
+    sent = False
+    if customer_email:
+        sent = send_email_dynamic(customer_email, subject_user, body_user, api_key) or sent
 
-Thank you for submitting your booking request! We're excited to help you finalize your travel plans.
+    # admin notification
+    settings = get_tenant_email_settings_by_api_key(api_key)
+    admin_email = settings.get("admin_email") if settings else None
+    subject_admin = f"Booking request from {booking.get('full_name')}"
+    body_admin = f"""
+Booking details:
+Name: {booking.get('full_name')}
+Phone: {booking.get('phone_number')}
+Departure: {booking.get('departure_date')}
+Total: {booking.get('estimated_total_price')}
+"""
+    if admin_email:
+        sent = send_email_dynamic(admin_email, subject_admin, body_admin, api_key) or sent
 
-Here are the details you provided:
-- Departure Date: {booking.get("departure_date", "N/A")}
-- Sharing Option: {booking.get("sharing_option", "N/A")}
-- Price per Person: ₹{booking.get("price_per_person", 0):,.2f}
-- Adults: {booking.get("adults", 0)}
-- Children: {booking.get("children", 0)}
-- Estimated Total Price: ₹{booking.get("estimated_total_price", 0):,.2f}
-- Phone Number: {booking.get("phone_number", "N/A")}
+    return sent
 
-Our team will contact you shortly to confirm availability and next steps.
 
-Warm regards,  
-Indian Mountain Rovers Travel Team
-""")
+def send_trip_inquiry_email(inquiry: dict, api_key: str) -> bool:
+    # customer confirmation
+    customer_email = inquiry.get("email")
+    subject_user = "Trip inquiry received"
+    body_user = f"Hi {inquiry.get('full_name','Guest')},\n\nThanks for your inquiry."
 
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.starttls()
-            server.login(ZOHO_USERNAME, ZOHO_PASSWORD)
-            server.send_message(msg)
-    except Exception as e:
-        print("Email sending failed:", e)
+    sent = False
+    if customer_email:
+        sent = send_email_dynamic(customer_email, subject_user, body_user, api_key) or sent
+
+    # admin notification
+    settings = get_tenant_email_settings_by_api_key(api_key)
+    admin_email = settings.get("admin_email") if settings else None
+    subject_admin = f"New trip inquiry from {inquiry.get('full_name')}"
+    body_admin = f"Details: {inquiry}"
+    if admin_email:
+        sent = send_email_dynamic(admin_email, subject_admin, body_admin, api_key) or sent
+
+    return sent

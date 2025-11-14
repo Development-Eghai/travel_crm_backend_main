@@ -41,6 +41,9 @@ from api import (
     quotation_item, booking_request
 )
 
+#Email-Util
+from api.user_smtp import router as user_smtp_router
+
 # --------------------------------------------------------------
 #                  SECURE APPLICATION
 # --------------------------------------------------------------
@@ -87,6 +90,10 @@ secure_app.include_router(trip_management.router, prefix="/api/trip-management",
 secure_app.include_router(trip_inquiry_router, prefix="/api/trip_enquires", tags=["Trip Enquires"])
 secure_app.include_router(booking_router, prefix="/api/booking_request", tags=["Booking Requests"])
 secure_app.include_router(enquire_router, prefix="/api/enquires", tags=["Enquires"])
+
+
+#EmailUtil
+secure_app.include_router(user_smtp_router, prefix="/api/user-settings", tags=["User Settings"])
 
 # ---- GLOBAL DELETE (correct placement) ----
 secure_app.include_router(global_delete_router, prefix="/api/global", tags=["Global Delete"])
