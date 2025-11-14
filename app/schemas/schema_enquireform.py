@@ -2,7 +2,6 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 
-
 class EnquireFormCreate(BaseModel):
     destination: str = Field(..., max_length=100)
     departure_city: str = Field(..., max_length=100)
@@ -15,7 +14,8 @@ class EnquireFormCreate(BaseModel):
     contact_number: str = Field(..., max_length=20)
     email: EmailStr
     additional_comments: Optional[str] = None
-    domain_name: Optional[str] = None  
+    domain_name: Optional[str] = None
+
 
 class EnquireFormOut(BaseModel):
     id: int
@@ -33,5 +33,7 @@ class EnquireFormOut(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    is_deleted: bool   # NEW
+
     class Config:
-        from_attributes = True  # ✅ Enables ORM model parsing
+        from_attributes = True

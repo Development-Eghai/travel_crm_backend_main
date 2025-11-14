@@ -5,6 +5,7 @@ from sqlalchemy import (
     String,
     Text,
     DateTime,
+    Boolean    # NEW
 )
 from sqlalchemy.sql import func
 from core.database import Base
@@ -14,7 +15,8 @@ class EnquireForm(Base):
     __tablename__ = "enquire_form"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, default=0) 
+    user_id = Column(Integer, default=0)
+
     destination = Column(String(100), nullable=False)
     departure_city = Column(String(100), nullable=False)
     travel_date = Column(String(50), nullable=False)
@@ -26,6 +28,10 @@ class EnquireForm(Base):
     contact_number = Column(String(20), nullable=False)
     email = Column(String(100), nullable=False)
     additional_comments = Column(Text, nullable=True)
+
+    # NEW — Soft delete flag
+    is_deleted = Column(Boolean, default=False)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
