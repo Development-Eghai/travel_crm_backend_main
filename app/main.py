@@ -12,6 +12,15 @@ import shutil
 from fastapi.responses import JSONResponse
 from typing import List
 
+# ---- Global Delete ----
+from api.global_delete import router as global_delete_router
+
+# Add is_deleted dynamically (auto patch)
+from utils.add_is_deleted import add_is_deleted_to_all_models
+
+# Global filter (auto apply user_id + is_deleted)
+from utils.global_filter import *
+
 from jose import jwt
 from passlib.context import CryptContext
 import os
@@ -33,7 +42,7 @@ from api import (
 )
 
 # --------------------------------------------------------------
-#   SECURE APPLICATION (Protected by API KEY)
+#                  SECURE APPLICATION
 # --------------------------------------------------------------
 secure_app = FastAPI(
     title="Travel CRM",
@@ -79,9 +88,14 @@ secure_app.include_router(trip_inquiry_router, prefix="/api/trip_enquires", tags
 secure_app.include_router(booking_router, prefix="/api/booking_request", tags=["Booking Requests"])
 secure_app.include_router(enquire_router, prefix="/api/enquires", tags=["Enquires"])
 
+# ---- GLOBAL DELETE (correct placement) ----
+secure_app.include_router(global_delete_router, prefix="/api/global", tags=["Global Delete"])
+
+# ---- Add is_deleted column to all models ----
+add_is_deleted_to_all_models()
 
 # --------------------------------------------------------------
-# PUBLIC APP (No auth required)
+# PUBLIC APP
 # --------------------------------------------------------------
 public_app = FastAPI(
     title="User Access",
@@ -100,22 +114,16 @@ public_app.add_middleware(
 public_app.include_router(user_router, prefix="/api/users", tags=["Users"])
 public_app.include_router(enquire_router, prefix="/api/enquires", tags=["Enquires"])
 
-
 # --------------------------------------------------------------
-# ROOT APP — THIS IS WHERE WE ADD MIDDLEWARE
+# ROOT GATEWAY APP
 # --------------------------------------------------------------
 app = FastAPI(title="Travel CRM Gateway")
 
 # --------------------------------------------------------------
-# TENANT MIDDLEWARE (CORRECT LOCATION)
+# TENANT MIDDLEWARE (x-api-key → request.state.user_id)
 # --------------------------------------------------------------
 @app.middleware("http")
 async def attach_user_id_to_request(request: Request, call_next):
-    """
-    Reads x-api-key ONCE per request.
-    Saves user_id → request.state.user_id.
-    TenantSession automatically uses this to filter DB.
-    """
     x_api_key = request.headers.get("x-api-key")
     request.state.user_id = None
 
@@ -126,27 +134,20 @@ async def attach_user_id_to_request(request: Request, call_next):
             api_row = db.query(APIKey).filter(APIKey.key_value == x_api_key).first()
             if api_row:
                 request.state.user_id = int(api_row.user_id)
-        except:
-            request.state.user_id = None
         finally:
             if db:
                 db.close()
 
     response = await call_next(request)
     return response
-# --------------------------------------------------------------
-# END TENANT MIDDLEWARE
-# --------------------------------------------------------------
-
 
 # --------------------------------------------------------------
-# Mount secure + public apps
+# MOUNT secure + public apps
 # --------------------------------------------------------------
 app.mount("/secure", secure_app)
 app.mount("/public", public_app)
 
-
-# CORS for root
+# CORS for gateway
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -160,53 +161,44 @@ def gateway_root():
     return {"msg": "Travel CRM Gateway is live with multi-tenancy"}
 
 # --------------------------------------------------------------
-# FILE UPLOAD HANDLING
+# IMAGE UPLOAD
 # --------------------------------------------------------------
 UPLOAD_FOLDER = "uploads"
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+IMG_URL = "https://api.yaadigo.com/uploads"
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_FOLDER), name="uploads")
 
 def allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-IMG_URL = "https://api.yaadigo.com/uploads"
-
-
 @app.post("/upload")
 def upload_image(image: UploadFile = File(...)):
     if image.filename == "":
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="No selected file")
+        raise HTTPException(status_code=400, detail="No file selected")
 
     if not allowed_file(image.filename):
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="File type not allowed")
+        raise HTTPException(status_code=400, detail="File type not allowed")
 
     file_path = Path(UPLOAD_FOLDER) / image.filename
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
-    image_url = f"{IMG_URL}/{image.filename}"
-    return JSONResponse(status_code=200, content={"message": "Upload successful", "url": image_url})
-
+    return {"message": "Upload successful", "url": f"{IMG_URL}/{image.filename}"}
 
 @app.post("/multiple")
 def upload_gallery_images(gallery_images: List[UploadFile] = File(...)):
-    if not gallery_images:
-        return JSONResponse(content={'error': 'No files part'}, status_code=400)
-
     saved_files = []
     for file in gallery_images:
-        if file.filename:
-            filename = Path(file.filename).name
-            save_path = os.path.join(UPLOAD_FOLDER, filename)
-            with open(save_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-
-            saved_files.append(f"{IMG_URL}/{filename}")
+        filename = Path(file.filename).name
+        save_path = os.path.join(UPLOAD_FOLDER, filename)
+        with open(save_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        saved_files.append(f"{IMG_URL}/{filename}")
 
     return {'message': 'Files uploaded', 'files': saved_files}
-
 
 # --------------------------------------------------------------
 # LOGIN / AUTH
@@ -217,17 +209,14 @@ SECRET_KEY = "your-secret-key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
-
 
 def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
 
 @app.post("/login", response_model=LoginResponse)
 def login_user(request: LoginRequest, db: Session = Depends(get_db)):
@@ -240,41 +229,37 @@ def login_user(request: LoginRequest, db: Session = Depends(get_db)):
     ).first()
 
     if not user or not verify_password(request.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     if user.status != UserStatus.Active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not active")
+        raise HTTPException(status_code=403, detail="User inactive")
 
     api_key_obj = db.query(APIKey).filter(
         APIKey.user_id == user.id,
         APIKey.is_active == True
     ).order_by(APIKey.created_at.desc()).first()
 
-    token_data = {
+    token = create_access_token({
         "sub": str(user.id),
         "email": user.email,
         "tenant_id": str(user.tenant_id),
         "role": user.role.name
-    }
-
-    access_token = create_access_token(data=token_data)
+    })
 
     return LoginResponse(
-        access_token=access_token,
+        access_token=token,
         api_key=api_key_obj.key_value if api_key_obj else None
     )
-
 
 @app.post("/admin_login", response_model=LoginResponse)
 def admin_login(request: LoginRequest):
     if request.email == "sales@indianmountainrovers.com" and request.password == "IndianMountainRovers2511@":
-        token_data = {
+        token = create_access_token({
             "sub": "1001",
             "email": request.email,
             "tenant_id": "1234",
-            "role": "admin",
-        }
-        access_token = create_access_token(token_data)
-        return LoginResponse(access_token=access_token)
+            "role": "admin"
+        })
+        return LoginResponse(access_token=token)
 
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+    raise HTTPException(status_code=401, detail="Invalid admin credentials")
