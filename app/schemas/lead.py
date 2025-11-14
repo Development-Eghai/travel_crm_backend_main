@@ -47,6 +47,8 @@ class LeadCreate(BaseModel):
 
 class LeadOut(BaseModel):
     id: int
+    user_id: int             # <-- ADDED
+
     name: str
     email: str
     mobile: str
@@ -57,12 +59,7 @@ class LeadOut(BaseModel):
     travel_to: Optional[date]
     adults: Optional[int]
     children: Optional[int]
-    # status: str
-    # priority: str
-    # assigned_to: Optional[int]
-    # follow_up_date: Optional[date]
     created_at: datetime
-    # source: Optional[str]
 
     class Config:
         from_attributes = True
