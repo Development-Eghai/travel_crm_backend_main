@@ -12,7 +12,7 @@ from models.lead import Lead
 from schemas.lead import LeadCreate, LeadOut
 from utils.response import api_json_response_format
 
-from core.auth import get_current_user_id   # <-- NEW
+from core.auth import get_current_user_id    # <-- NEW (Ensured correct spacing after fixing SyntaxError)
 
 router = APIRouter()
 UPLOAD_DIR = "uploads/leads"
@@ -27,7 +27,7 @@ def upload_lead_document(
     file: UploadFile = File(...),
     uploaded_by: int = Form(...),
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id)  # <-- TENANT CHECK
+    user_id: int = Depends(get_current_user_id) 
 ):
     try:
         # Validate lead belongs to user
@@ -70,7 +70,7 @@ def create_lead(
 ):
     try:
         lead_data = lead_in.model_dump(exclude_unset=True)
-        lead = Lead(user_id=user_id, **lead_data)  # <-- TENANT ASSIGNMENT
+        lead = Lead(user_id=user_id, **lead_data)
 
         db.add(lead)
         db.commit()
@@ -91,7 +91,12 @@ def get_all_leads(
     user_id: int = Depends(get_current_user_id)
 ):
     try:
-        leads = db.query(Lead).filter(Lead.user_id == user_id).all()  # <-- FILTER
+        # MODIFIED: Filter leads by user_id AND ensure is_deleted is False
+        leads = db.query(Lead).filter(
+            Lead.user_id == user_id,
+            Lead.is_deleted == False  # <-- ADDED FILTER
+        ).all() 
+
         data = [LeadOut.model_validate(l).model_dump() for l in leads]
         return api_json_response_format(True, "Leads retrieved successfully.", 200, data)
     except Exception as e:
@@ -144,7 +149,7 @@ def update_lead(
 
 
 # -------------------------
-# Delete Lead
+# Delete Lead (Hard Delete - Soft Delete happens via global API)
 # -------------------------
 @router.delete("/{lead_id}")
 def delete_lead(
