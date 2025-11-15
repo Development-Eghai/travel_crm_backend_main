@@ -6,8 +6,7 @@ from models.activity import Activity
 from models.category import Category
 from models.booking_request import BookingRequest
 from models.model_enquireform import EnquireForm
-
-# ADD MORE MODELS HERE WHEN YOU CREATE NEW MODULES
+from models.lead import Lead
 
 TABLE_MODEL_MAP = {
     "trips": Trip,
@@ -15,11 +14,12 @@ TABLE_MODEL_MAP = {
     "activities": Activity,
     "categories": Category,
     "booking_requests": BookingRequest,
-    "enquire_form": EnquireForm
+    "enquire_form": EnquireForm,
+    "leads": Lead,
 }
 
 def get_model(table_name: str):
-    model = TABLE_MODEL_MAP.get(table_name.lower())
-    if not model:
+    table_name = table_name.lower()
+    if table_name not in TABLE_MODEL_MAP:
         raise ValueError(f"Table '{table_name}' is not registered for global delete handling.")
-    return model
+    return TABLE_MODEL_MAP[table_name]
