@@ -1,7 +1,13 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlalchemy.orm import Session
+
 from models.booking_request import BookingRequest
-from schemas.booking_request import BookingRequestCreate, BookingRequestOut
+from schemas.booking_request import (
+    BookingRequestCreate,
+    BookingRequestUpdate,
+    BookingRequestOut
+)
+
 from core.database import get_db
 from utils.response import api_json_response_format
 from models.user import User
@@ -25,12 +31,12 @@ def create_booking(
         if not user:
             return api_json_response_format(False, "Invalid domain name – user not found.", 404, {})
 
-        booking_data = data.model_dump()
+        booking_data = data.model_dump(exclude={"domain_name"})
         booking = BookingRequest(user_id=user.id, **booking_data)
 
         db.add(booking)
-        db.flush()                    # <-- ensures ID is generated
-        booking.booking_id = booking.id   # <-- NEW SAFE FIELD POPULATION
+        db.flush()
+        booking.booking_id = booking.id
 
         db.commit()
         db.refresh(booking)
@@ -50,7 +56,7 @@ def create_booking(
 
 
 # ----------------------------------------------------------
-# GET ALL BOOKINGS (not deleted)
+# GET ALL BOOKINGS (non-deleted)
 # ----------------------------------------------------------
 @router.get("/")
 def get_all_bookings(db: Session = Depends(get_db), x_api_key: str = Header(None)):
@@ -62,11 +68,9 @@ def get_all_bookings(db: Session = Depends(get_db), x_api_key: str = Header(None
         if not api_entry:
             raise HTTPException(status_code=401, detail="Invalid API Key")
 
-        user_id = api_entry.user_id
-
         records = (
             db.query(BookingRequest)
-            .filter(BookingRequest.user_id == user_id, BookingRequest.is_deleted == False)
+            .filter(BookingRequest.user_id == api_entry.user_id, BookingRequest.is_deleted == False)
             .order_by(BookingRequest.created_at.desc())
             .all()
         )
@@ -93,6 +97,50 @@ def get_booking(booking_id: int, db: Session = Depends(get_db)):
 
     except Exception as e:
         return api_json_response_format(False, f"Error retrieving booking: {e}", 500, {})
+
+
+# ----------------------------------------------------------
+# UPDATE BOOKING (PUT)
+# ----------------------------------------------------------
+@router.put("/{booking_id}")
+def update_booking(
+    booking_id: int,
+    data: BookingRequestUpdate,
+    db: Session = Depends(get_db),
+    x_api_key: str = Header(None)
+):
+    try:
+        api_entry = db.query(APIKey).filter(APIKey.key_value == x_api_key).first()
+        if not api_entry:
+            raise HTTPException(status_code=401, detail="Invalid API Key")
+
+        record = (
+            db.query(BookingRequest)
+            .filter(
+                BookingRequest.id == booking_id,
+                BookingRequest.user_id == api_entry.user_id,
+                BookingRequest.is_deleted == False
+            )
+            .first()
+        )
+
+        if not record:
+            return api_json_response_format(False, "Booking not found", 404, {})
+
+        update_data = data.model_dump(exclude_unset=True)
+
+        for key, value in update_data.items():
+            setattr(record, key, value)
+
+        db.commit()
+        db.refresh(record)
+
+        response = BookingRequestOut.model_validate(record).model_dump()
+        return api_json_response_format(True, "Booking updated successfully.", 200, response)
+
+    except Exception as e:
+        db.rollback()
+        return api_json_response_format(False, f"Error updating booking: {e}", 500, {})
 
 
 # ----------------------------------------------------------
@@ -132,14 +180,14 @@ def get_booking_trash(db: Session = Depends(get_db), x_api_key: str = Header(Non
         if not api_entry:
             raise HTTPException(status_code=401, detail="Invalid API Key")
 
-        records = (
+        trashed = (
             db.query(BookingRequest)
             .filter(BookingRequest.user_id == api_entry.user_id, BookingRequest.is_deleted == True)
             .order_by(BookingRequest.created_at.desc())
             .all()
         )
 
-        data = [BookingRequestOut.model_validate(b).model_dump() for b in records]
+        data = [BookingRequestOut.model_validate(b).model_dump() for b in trashed]
         return api_json_response_format(True, "Trash retrieved.", 200, data)
 
     except Exception as e:
@@ -149,7 +197,7 @@ def get_booking_trash(db: Session = Depends(get_db), x_api_key: str = Header(Non
 # ----------------------------------------------------------
 # HARD DELETE
 # ----------------------------------------------------------
-@router.delete("/{booking_id}/hard}")
+@router.delete("/{booking_id}/hard")
 def hard_delete_booking(booking_id: int, db: Session = Depends(get_db), x_api_key: str = Header(None)):
     try:
         api_entry = db.query(APIKey).filter(APIKey.key_value == x_api_key).first()
@@ -170,6 +218,7 @@ def hard_delete_booking(booking_id: int, db: Session = Depends(get_db), x_api_ke
         return api_json_response_format(True, "Booking permanently deleted.", 200, {})
 
     except Exception as e:
+        db.rollback()
         return api_json_response_format(False, f"Error deleting booking: {e}", 500, {})
 
 

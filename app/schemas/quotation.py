@@ -1,13 +1,19 @@
-# schemas/quotation.py
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import date
 
+# ------------------------------
+# AGENT
+# ------------------------------
 class AgentInfo(BaseModel):
     name: str
     email: str
     contact: str
 
+
+# ------------------------------
+# COMPANY
+# ------------------------------
 class CompanyInfo(BaseModel):
     name: str
     email: str
@@ -16,9 +22,14 @@ class CompanyInfo(BaseModel):
     licence: Optional[str]
     logo_url: Optional[str]
 
+
+# ------------------------------
+# TRIP DETAILS
+# ------------------------------
 class TripSection(BaseModel):
     title: str
     content: str
+
 
 class TripDetails(BaseModel):
     display_title: str
@@ -27,11 +38,19 @@ class TripDetails(BaseModel):
     gallery_images: List[str]
     sections: List[TripSection]
 
+
+# ------------------------------
+# ITINERARY
+# ------------------------------
 class ItineraryItem(BaseModel):
     day: int
     title: str
     description: str
 
+
+# ------------------------------
+# COSTING
+# ------------------------------
 class Costing(BaseModel):
     type: str
     price_per_person: Optional[int]
@@ -39,12 +58,20 @@ class Costing(BaseModel):
     selected_slot: Optional[str]
     selected_package: Optional[str]
 
+
+# ------------------------------
+# POLICIES
+# ------------------------------
 class Policies(BaseModel):
     payment_terms: str
     cancellation_policy: str
     terms_and_conditions: str
     custom_policy: Optional[str]
 
+
+# ------------------------------
+# PAYMENT
+# ------------------------------
 class PaymentDetails(BaseModel):
     bank_name: str
     account_number: str
@@ -55,6 +82,10 @@ class PaymentDetails(BaseModel):
     upi_ids: List[str]
     qr_code_url: Optional[str]
 
+
+# ------------------------------
+# CREATE SCHEMA
+# ------------------------------
 class QuotationCreate(BaseModel):
     lead_id: int
     design: str
@@ -69,12 +100,34 @@ class QuotationCreate(BaseModel):
     amount: Optional[int]
     date: Optional[date]
 
+
+# ------------------------------
+# UPDATE SCHEMA (Partial update)
+# ------------------------------
+class QuotationUpdate(BaseModel):
+    design: Optional[str]
+    status: Optional[str]
+    amount: Optional[int]
+    date: Optional[date]
+
+    agent: Optional[AgentInfo]
+    company: Optional[CompanyInfo]
+    trip: Optional[TripDetails]
+    itinerary: Optional[List[ItineraryItem]]
+    costing: Optional[Costing]
+    policies: Optional[Policies]
+    payment: Optional[PaymentDetails]
+
+
+# ------------------------------
+# SMALL LIST OUTPUT SCHEMA
+# ------------------------------
 class QuotationOut(BaseModel):
     id: int
     lead_id: int
     design: str
     status: str
-    amount: int
+    amount: Optional[int]
     date: date
 
     class Config:
