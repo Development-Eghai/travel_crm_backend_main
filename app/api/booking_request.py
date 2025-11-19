@@ -21,7 +21,6 @@ def create_booking(
     db: Session = Depends(get_db)
 ):
     try:
-        # Domain validation
         user = db.query(User).filter(User.website == data.domain_name).first()
         if not user:
             return api_json_response_format(False, "Invalid domain name – user not found.", 404, {})
@@ -30,12 +29,14 @@ def create_booking(
         booking = BookingRequest(user_id=user.id, **booking_data)
 
         db.add(booking)
+        db.flush()                    # <-- ensures ID is generated
+        booking.booking_id = booking.id   # <-- NEW SAFE FIELD POPULATION
+
         db.commit()
         db.refresh(booking)
 
         response_data = BookingRequestOut.model_validate(booking).model_dump()
 
-        # TENANT EMAIL — uses x-api-key
         x_api_key = request.headers.get("x-api-key")
         try:
             send_booking_email(response_data, x_api_key)
@@ -148,7 +149,7 @@ def get_booking_trash(db: Session = Depends(get_db), x_api_key: str = Header(Non
 # ----------------------------------------------------------
 # HARD DELETE
 # ----------------------------------------------------------
-@router.delete("/{booking_id}/hard")
+@router.delete("/{booking_id}/hard}")
 def hard_delete_booking(booking_id: int, db: Session = Depends(get_db), x_api_key: str = Header(None)):
     try:
         api_entry = db.query(APIKey).filter(APIKey.key_value == x_api_key).first()

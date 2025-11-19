@@ -14,11 +14,13 @@ class BookingRequestCreate(BaseModel):
     phone_number: str
     domain_name: Optional[str] = None
 
+
 class BookingRequestOut(BookingRequestCreate):
     id: int
+    booking_id: Optional[int] = None   # <-- NEW FIELD
     created_at: datetime
     updated_at: datetime
-    is_deleted: bool   # NEW
+    is_deleted: bool
 
     class Config:
         from_attributes = True

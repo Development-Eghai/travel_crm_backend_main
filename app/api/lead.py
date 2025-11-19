@@ -12,7 +12,7 @@ from models.lead import Lead
 from schemas.lead import LeadCreate, LeadOut
 from utils.response import api_json_response_format
 
-from core.auth import get_current_user_id    # <-- NEW (Ensured correct spacing after fixing SyntaxError)
+from core.auth import get_current_user_id
 
 router = APIRouter()
 UPLOAD_DIR = "uploads/leads"
@@ -30,8 +30,11 @@ def upload_lead_document(
     user_id: int = Depends(get_current_user_id) 
 ):
     try:
-        # Validate lead belongs to user
-        lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == user_id).first()
+        lead = db.query(Lead).filter(
+            Lead.id == lead_id,
+            Lead.user_id == user_id
+        ).first()
+
         if not lead:
             return api_json_response_format(False, "Unauthorized or lead not found", 403, {})
 
@@ -53,7 +56,12 @@ def upload_lead_document(
         db.commit()
         db.refresh(doc)
 
-        return api_json_response_format(True, "Document uploaded successfully.", 201, LeadDocumentOut.from_attributes(doc).model_dump())
+        return api_json_response_format(
+            True, 
+            "Document uploaded successfully.", 
+            201, 
+            LeadDocumentOut.from_attributes(doc).model_dump()
+        )
 
     except Exception as e:
         return api_json_response_format(False, f"Error uploading document: {e}", 500, {})
@@ -73,10 +81,20 @@ def create_lead(
         lead = Lead(user_id=user_id, **lead_data)
 
         db.add(lead)
+        db.flush()  # ensures lead.id is created
+
+        # SAFE MIGRATION FIELD
+        lead.lead_id = lead.id
+
         db.commit()
         db.refresh(lead)
 
-        return api_json_response_format(True, "Lead created successfully.", 201, {"lead_id": lead.id})
+        return api_json_response_format(
+            True, 
+            "Lead created successfully.", 
+            201, 
+            {"lead_id": lead.lead_id}
+        )
 
     except Exception as e:
         return api_json_response_format(False, f"Error creating lead: {e}", 500, {})
@@ -91,14 +109,15 @@ def get_all_leads(
     user_id: int = Depends(get_current_user_id)
 ):
     try:
-        # MODIFIED: Filter leads by user_id AND ensure is_deleted is False
         leads = db.query(Lead).filter(
             Lead.user_id == user_id,
-            Lead.is_deleted == False  # <-- ADDED FILTER
-        ).all() 
+            Lead.is_deleted == False
+        ).all()
 
         data = [LeadOut.model_validate(l).model_dump() for l in leads]
+
         return api_json_response_format(True, "Leads retrieved successfully.", 200, data)
+
     except Exception as e:
         return api_json_response_format(False, f"Error retrieving leads: {e}", 500, {})
 
@@ -113,10 +132,21 @@ def get_lead_by_id(
     user_id: int = Depends(get_current_user_id)
 ):
     try:
-        lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == user_id).first()
+        lead = db.query(Lead).filter(
+            Lead.id == lead_id,
+            Lead.user_id == user_id
+        ).first()
+
         if not lead:
             return api_json_response_format(False, "Lead not found or unauthorized", 404, {})
-        return api_json_response_format(True, "Lead retrieved successfully.", 200, LeadOut.model_validate(lead).model_dump())
+
+        return api_json_response_format(
+            True, 
+            "Lead retrieved successfully.", 
+            200, 
+            LeadOut.model_validate(lead).model_dump()
+        )
+
     except Exception as e:
         return api_json_response_format(False, f"Error retrieving lead: {e}", 500, {})
 
@@ -132,7 +162,11 @@ def update_lead(
     user_id: int = Depends(get_current_user_id)
 ):
     try:
-        lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == user_id).first()
+        lead = db.query(Lead).filter(
+            Lead.id == lead_id,
+            Lead.user_id == user_id
+        ).first()
+
         if not lead:
             return api_json_response_format(False, "Lead not found or unauthorized", 404, {})
 
@@ -149,7 +183,7 @@ def update_lead(
 
 
 # -------------------------
-# Delete Lead (Hard Delete - Soft Delete happens via global API)
+# Delete Lead (Hard Delete)
 # -------------------------
 @router.delete("/{lead_id}")
 def delete_lead(
@@ -158,12 +192,17 @@ def delete_lead(
     user_id: int = Depends(get_current_user_id)
 ):
     try:
-        lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == user_id).first()
+        lead = db.query(Lead).filter(
+            Lead.id == lead_id,
+            Lead.user_id == user_id
+        ).first()
+
         if not lead:
             return api_json_response_format(False, "Lead not found or unauthorized", 404, {})
 
         db.delete(lead)
         db.commit()
+
         return api_json_response_format(True, "Lead deleted successfully.", 200, {})
 
     except Exception as e:

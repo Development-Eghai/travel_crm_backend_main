@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
-from datetime import datetime, date, time
+from datetime import datetime, date
+
 class LeadCommentIn(BaseModel):
     user_name: str
     comment: str
@@ -11,25 +12,6 @@ class LeadDocumentIn(BaseModel):
     uploaded_by: int
     uploaded_at: datetime
 
-# class LeadCreate(BaseModel):
-#     name: str
-#     email: str
-#     mobile: str
-#     destination_type: str
-#     pickup: Optional[str]
-#     drop: Optional[str]
-#     travel_from: Optional[date]
-#     travel_to: Optional[date]
-#     adults: Optional[int]
-#     children: Optional[int]
-#     status: Optional[str] = "New"
-#     priority: Optional[str] = "Medium"
-#     assigned_to: Optional[int]
-#     follow_up_date: Optional[date]
-#     source: Optional[str]
-
-#     comments: Optional[List[LeadCommentIn]] = []
-#     linked_documents: Optional[List[LeadDocumentIn]] = []
 
 class LeadCreate(BaseModel):
     name: str
@@ -44,10 +26,10 @@ class LeadCreate(BaseModel):
     children: str
 
 
-
 class LeadOut(BaseModel):
     id: int
-    user_id: int             # <-- ADDED
+    lead_id: Optional[int] = None   # <-- NEW FIELD
+    user_id: int
 
     name: str
     email: str

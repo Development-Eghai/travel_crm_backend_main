@@ -19,6 +19,8 @@ class EnquireFormCreate(BaseModel):
 
 class EnquireFormOut(BaseModel):
     id: int
+    enquiry_id: Optional[int] = None            # <-- NEW FIELD
+
     destination: str
     departure_city: str
     travel_date: str
@@ -33,7 +35,7 @@ class EnquireFormOut(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    is_deleted: bool   # NEW
+    is_deleted: bool
 
     class Config:
         from_attributes = True

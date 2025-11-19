@@ -5,7 +5,7 @@ from sqlalchemy import (
     String,
     Text,
     DateTime,
-    Boolean    # NEW
+    Boolean
 )
 from sqlalchemy.sql import func
 from core.database import Base
@@ -15,6 +15,9 @@ class EnquireForm(Base):
     __tablename__ = "enquire_form"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+
+    enquiry_id = Column(Integer, unique=True, index=True, nullable=True)   # <-- NEW FIELD
+
     user_id = Column(Integer, default=0)
 
     destination = Column(String(100), nullable=False)
@@ -29,7 +32,6 @@ class EnquireForm(Base):
     email = Column(String(100), nullable=False)
     additional_comments = Column(Text, nullable=True)
 
-    # NEW — Soft delete flag
     is_deleted = Column(Boolean, default=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

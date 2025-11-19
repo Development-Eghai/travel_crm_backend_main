@@ -72,12 +72,14 @@ async def create_enquiry(
         record = EnquireForm(user_id=user.id, **payload)
 
         db.add(record)
+        db.flush()                       # <-- creates record.id early
+        record.enquiry_id = record.id    # <-- NEW FIELD POPULATION
+
         db.commit()
         db.refresh(record)
 
         response_data = EnquireFormOut.model_validate(record).model_dump()
 
-        # TENANT EMAIL — uses x-api-key
         x_api_key = request.headers.get("x-api-key")
         try:
             send_enquiry_email(response_data, x_api_key)
