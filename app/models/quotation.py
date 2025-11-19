@@ -1,6 +1,5 @@
-# models/quotation.py
 from core.database import Base
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Date, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Date, DateTime, Boolean, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -14,7 +13,6 @@ class Quotation(Base):
     amount = Column(Integer)
     date = Column(Date, default=datetime.utcnow)
 
-    # NEW: soft-delete flag used by global delete
     is_deleted = Column(Boolean, default=False, nullable=False)
 
     agent = relationship("QuotationAgent", backref="quotation", uselist=False, cascade="all, delete")
@@ -33,7 +31,7 @@ class QuotationAgent(Base):
     name = Column(String)
     email = Column(String)
     contact = Column(String)
-    is_deleted = Column(Boolean, default=False, nullable=False)  # optional but safe
+    is_deleted = Column(Boolean, default=False, nullable=False)
 
 
 class QuotationCompany(Base):
@@ -46,7 +44,7 @@ class QuotationCompany(Base):
     website = Column(String)
     licence = Column(String)
     logo_url = Column(String)
-    is_deleted = Column(Boolean, default=False, nullable=False)  # optional
+    is_deleted = Column(Boolean, default=False, nullable=False)
 
 
 class QuotationTrip(Base):
@@ -56,8 +54,8 @@ class QuotationTrip(Base):
     display_title = Column(String)
     overview = Column(Text)
     hero_image = Column(String)
-    gallery_images = Column(Text)  # comma-separated URLs
-    is_deleted = Column(Boolean, default=False, nullable=False)  # optional
+    gallery_images = Column(Text)
+    is_deleted = Column(Boolean, default=False, nullable=False)
 
 
 class QuotationTripSection(Base):
@@ -66,7 +64,7 @@ class QuotationTripSection(Base):
     quotation_id = Column(Integer, ForeignKey("quotations.id"))
     title = Column(String)
     content = Column(Text)
-    is_deleted = Column(Boolean, default=False, nullable=False)  # optional
+    is_deleted = Column(Boolean, default=False, nullable=False)
 
 
 class QuotationItinerary(Base):
@@ -76,19 +74,18 @@ class QuotationItinerary(Base):
     day = Column(Integer)
     title = Column(String)
     description = Column(Text)
-    is_deleted = Column(Boolean, default=False, nullable=False)  # optional
+    is_deleted = Column(Boolean, default=False, nullable=False)
 
 
 class QuotationCosting(Base):
     __tablename__ = "quotation_costing"
     id = Column(Integer, primary_key=True)
     quotation_id = Column(Integer, ForeignKey("quotations.id"))
-    type = Column(String)  # customised / fixed
-    price_per_person = Column(Integer)
-    price_per_package = Column(Integer)
-    selected_slot = Column(String)
-    selected_package = Column(String)
-    is_deleted = Column(Boolean, default=False, nullable=False)  # optional
+    type = Column(String)
+    currency = Column(String, default="INR")
+    total_amount = Column(Integer)
+    items = Column(JSON)  # Store as JSON array
+    is_deleted = Column(Boolean, default=False, nullable=False)
 
 
 class QuotationPolicies(Base):
@@ -99,7 +96,7 @@ class QuotationPolicies(Base):
     cancellation_policy = Column(Text)
     terms_and_conditions = Column(Text)
     custom_policy = Column(Text)
-    is_deleted = Column(Boolean, default=False, nullable=False)  # optional
+    is_deleted = Column(Boolean, default=False, nullable=False)
 
 
 class QuotationPayment(Base):
@@ -112,6 +109,6 @@ class QuotationPayment(Base):
     branch_name = Column(String)
     gst_number = Column(String)
     address = Column(Text)
-    upi_ids = Column(Text)  # comma-separated
+    upi_ids = Column(Text)
     qr_code_url = Column(String)
-    is_deleted = Column(Boolean, default=False, nullable=False)  # optional
+    is_deleted = Column(Boolean, default=False, nullable=False)

@@ -49,14 +49,19 @@ class ItineraryItem(BaseModel):
 
 
 # ------------------------------
-# COSTING
+# COSTING (UPDATED)
 # ------------------------------
+class CostingItem(BaseModel):
+    name: str
+    quantity: int
+    unit_price: int
+
+
 class Costing(BaseModel):
     type: str
-    price_per_person: Optional[int]
-    price_per_package: Optional[int]
-    selected_slot: Optional[str]
-    selected_package: Optional[str]
+    currency: Optional[str] = "INR"
+    total_amount: int
+    items: List[CostingItem]
 
 
 # ------------------------------

@@ -64,8 +64,15 @@ def create_quotation(quotation_in: QuotationCreate, db: Session = Depends(get_db
         for item in quotation_in.itinerary:
             db.add(QuotationItinerary(quotation_id=quotation.id, **item.model_dump()))
 
-        # COSTING
-        db.add(QuotationCosting(quotation_id=quotation.id, **quotation_in.costing.model_dump()))
+        # COSTING (UPDATED)
+        costing_data = {
+            "quotation_id": quotation.id,
+            "type": quotation_in.costing.type,
+            "currency": quotation_in.costing.currency,
+            "total_amount": quotation_in.costing.total_amount,
+            "items": [item.model_dump() for item in quotation_in.costing.items]
+        }
+        db.add(QuotationCosting(**costing_data))
 
         # POLICIES
         db.add(QuotationPolicies(quotation_id=quotation.id, **quotation_in.policies.model_dump()))
@@ -155,10 +162,9 @@ def get_all_quotations(db: Session = Depends(get_db)):
                 ],
                 "costing": {
                     "type": q.costing.type,
-                    "price_per_person": q.costing.price_per_person,
-                    "price_per_package": q.costing.price_per_package,
-                    "selected_slot": q.costing.selected_slot,
-                    "selected_package": q.costing.selected_package
+                    "currency": q.costing.currency,
+                    "total_amount": q.costing.total_amount,
+                    "items": q.costing.items
                 } if q.costing else None,
                 "policies": {
                     "payment_terms": q.policies.payment_terms,
@@ -236,10 +242,9 @@ def get_full_quotation(quotation_id: int, db: Session = Depends(get_db)):
             ],
             "costing": {
                 "type": quotation.costing.type,
-                "price_per_person": quotation.costing.price_per_person,
-                "price_per_package": quotation.costing.price_per_package,
-                "selected_slot": quotation.costing.selected_slot,
-                "selected_package": quotation.costing.selected_package
+                "currency": quotation.costing.currency,
+                "total_amount": quotation.costing.total_amount,
+                "items": quotation.costing.items
             } if quotation.costing else None,
             "policies": {
                 "payment_terms": quotation.policies.payment_terms,
@@ -323,8 +328,16 @@ def update_quotation(quotation_id: int, quotation_in: QuotationUpdate, db: Sessi
             for item in quotation_in.itinerary:
                 db.add(QuotationItinerary(quotation_id=quotation_id, **item.model_dump()))
 
+        # COSTING (UPDATED)
         if quotation_in.costing:
-            db.add(QuotationCosting(quotation_id=quotation_id, **quotation_in.costing.model_dump()))
+            costing_data = {
+                "quotation_id": quotation_id,
+                "type": quotation_in.costing.type,
+                "currency": quotation_in.costing.currency,
+                "total_amount": quotation_in.costing.total_amount,
+                "items": [item.model_dump() for item in quotation_in.costing.items]
+            }
+            db.add(QuotationCosting(**costing_data))
 
         if quotation_in.policies:
             db.add(QuotationPolicies(quotation_id=quotation_id, **quotation_in.policies.model_dump()))
