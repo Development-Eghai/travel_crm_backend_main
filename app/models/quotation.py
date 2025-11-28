@@ -7,12 +7,22 @@ class Quotation(Base):
     __tablename__ = "quotations"
 
     id = Column(Integer, primary_key=True, index=True)
-    lead_id = Column(Integer, ForeignKey("leads.id"), nullable=False)
+    lead_id = Column(Integer, nullable=False)
     design = Column(String, nullable=False)
     status = Column(String, default="Draft")
     amount = Column(Integer)
     date = Column(Date, default=datetime.utcnow)
+    
+    # Client fields for list views and direct storage
+    client_name = Column(String, default="")
+    client_email = Column(String, default="")
+    client_mobile = Column(String, default="")
 
+    # Image fields stored on main table for quick list access
+    # These are duplicated from trip for performance
+    hero_image = Column(String, default="")
+    gallery_images = Column(Text, default="")  # Comma-separated string
+    
     is_deleted = Column(Boolean, default=False, nullable=False)
 
     agent = relationship("QuotationAgent", backref="quotation", uselist=False, cascade="all, delete")
@@ -51,10 +61,11 @@ class QuotationTrip(Base):
     __tablename__ = "quotation_trips"
     id = Column(Integer, primary_key=True)
     quotation_id = Column(Integer, ForeignKey("quotations.id"))
+    trip_id = Column(Integer, nullable=True) 
     display_title = Column(String)
     overview = Column(Text)
     hero_image = Column(String)
-    gallery_images = Column(Text)
+    gallery_images = Column(Text)  # Comma-separated string
     is_deleted = Column(Boolean, default=False, nullable=False)
 
 
@@ -81,10 +92,17 @@ class QuotationCosting(Base):
     __tablename__ = "quotation_costing"
     id = Column(Integer, primary_key=True)
     quotation_id = Column(Integer, ForeignKey("quotations.id"))
-    type = Column(String)
+    type = Column(String)  # "person" or "package"
     currency = Column(String, default="INR")
     total_amount = Column(Integer)
-    items = Column(JSON)  # Store as JSON array
+    
+    # Package-based costing support
+    selected_package_id = Column(String, nullable=True)
+    packages = Column(JSON, default=[])  # Store package options with components
+    
+    # Simple item-based costing (NOW WITH image_urls in each item)
+    items = Column(JSON, default=[])
+    
     is_deleted = Column(Boolean, default=False, nullable=False)
 
 
@@ -109,6 +127,6 @@ class QuotationPayment(Base):
     branch_name = Column(String)
     gst_number = Column(String)
     address = Column(Text)
-    upi_ids = Column(Text)
+    upi_ids = Column(Text)  # Comma-separated
     qr_code_url = Column(String)
     is_deleted = Column(Boolean, default=False, nullable=False)

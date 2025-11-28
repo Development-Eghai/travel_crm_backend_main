@@ -123,6 +123,11 @@ class TripCreate(BaseModel):
     itinerary: Optional[List[ItineraryItem]] = []
     pricing: Optional[TripPricingSchema]
     policies: Optional[List[TripPolicySchema]] = []
+    feature_trip_flag: Optional[bool] = False
+    feature_trip_type: Optional[str]
+    meta_title: Optional[str]
+    meta_description: Optional[str]
+    display_order: Optional[int]
 
 
 # -------------------- TripOut --------------------

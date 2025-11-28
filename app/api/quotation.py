@@ -1,29 +1,37 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import date
+from datetime import datetime, date
+from typing import List
 
-from schemas.quotation import (
-    QuotationCreate,
-    QuotationOut,
-    QuotationUpdate
-)
-
+from schemas.quotation import QuotationCreate, QuotationOut, QuotationUpdate
 from models.quotation import (
-    Quotation,
-    QuotationAgent,
-    QuotationCompany,
-    QuotationTrip,
-    QuotationTripSection,
-    QuotationItinerary,
-    QuotationCosting,
-    QuotationPolicies,
-    QuotationPayment
+    Quotation, QuotationAgent, QuotationCompany, QuotationTrip, 
+    QuotationTripSection, QuotationItinerary, QuotationCosting,
+    QuotationPolicies, QuotationPayment
 )
-
 from core.database import get_db
-from utils.response import api_json_response_format
+
+
+def api_json_response_format(success, message, status_code, data):
+    """Standard API response format"""
+    response = {"success": success, "message": message}
+    if data is not None:
+        if isinstance(data, list):
+            response["data"] = data
+        elif isinstance(data, dict):
+            response.update(data)
+    return response
+
 
 router = APIRouter()
+
+
+def clean_gallery_images(images: List[str]) -> str:
+    """Remove empty strings and return comma-separated string"""
+    if not images:
+        return ""
+    cleaned = [url.strip() for url in images if url and url.strip()]
+    return ",".join(cleaned)
 
 
 # ------------------------------------------------------
@@ -32,12 +40,25 @@ router = APIRouter()
 @router.post("/")
 def create_quotation(quotation_in: QuotationCreate, db: Session = Depends(get_db)):
     try:
+        # Extract images from trip object (single source of truth)
+        hero_image = quotation_in.trip.hero_image or ""
+        gallery_images_str = clean_gallery_images(quotation_in.trip.gallery_images)
+        
+        # BASE QUOTATION FIELDS
         quotation = Quotation(
             lead_id=quotation_in.lead_id,
             design=quotation_in.design,
             status=quotation_in.status,
             amount=quotation_in.amount,
-            date=quotation_in.date or date.today()
+            date=quotation_in.date or date.today(),
+            
+            client_name=quotation_in.client_name or "",
+            client_email=quotation_in.client_email or "",
+            client_mobile=quotation_in.client_mobile or "",
+            
+            # Store images on main table for list performance
+            hero_image=hero_image,
+            gallery_images=gallery_images_str
         )
         db.add(quotation)
         db.flush()
@@ -48,13 +69,14 @@ def create_quotation(quotation_in: QuotationCreate, db: Session = Depends(get_db
         # COMPANY
         db.add(QuotationCompany(quotation_id=quotation.id, **quotation_in.company.model_dump()))
 
-        # TRIP
+        # TRIP 
         db.add(QuotationTrip(
             quotation_id=quotation.id,
+            trip_id=quotation_in.trip.trip_id, 
             display_title=quotation_in.trip.display_title,
             overview=quotation_in.trip.overview,
-            hero_image=quotation_in.trip.hero_image,
-            gallery_images=",".join(quotation_in.trip.gallery_images)
+            hero_image=hero_image,
+            gallery_images=gallery_images_str
         ))
 
         for section in quotation_in.trip.sections:
@@ -64,13 +86,15 @@ def create_quotation(quotation_in: QuotationCreate, db: Session = Depends(get_db
         for item in quotation_in.itinerary:
             db.add(QuotationItinerary(quotation_id=quotation.id, **item.model_dump()))
 
-        # COSTING (UPDATED)
+        # COSTING - SUPPORT BOTH PACKAGE AND ITEMS (WITH IMAGES)
         costing_data = {
             "quotation_id": quotation.id,
             "type": quotation_in.costing.type,
             "currency": quotation_in.costing.currency,
             "total_amount": quotation_in.costing.total_amount,
-            "items": [item.model_dump() for item in quotation_in.costing.items]
+            "selected_package_id": quotation_in.costing.selected_package_id,
+            "packages": [pkg.model_dump() for pkg in quotation_in.costing.packages] if quotation_in.costing.packages else [],
+            "items": [item.model_dump() for item in quotation_in.costing.items] if quotation_in.costing.items else []
         }
         db.add(QuotationCosting(**costing_data))
 
@@ -89,7 +113,7 @@ def create_quotation(quotation_in: QuotationCreate, db: Session = Depends(get_db
 
     except Exception as e:
         db.rollback()
-        return api_json_response_format(False, f"Error creating quotation: {e}", 500, {})
+        raise HTTPException(status_code=500, detail=f"Error creating quotation: {str(e)}")
 
 
 # ------------------------------------------------------
@@ -108,11 +132,11 @@ def get_quotations_for_lead(lead_id: int, db: Session = Depends(get_db)):
         return api_json_response_format(True, "Quotations retrieved successfully.", 200, data)
 
     except Exception as e:
-        return api_json_response_format(False, f"Error retrieving quotations: {e}", 500, {})
+        raise HTTPException(status_code=500, detail=f"Error retrieving quotations: {str(e)}")
 
 
 # ------------------------------------------------------
-# GET ALL QUOTATIONS
+# GET ALL QUOTATIONS (SUMMARY LIST)
 # ------------------------------------------------------
 @router.get("/")
 def get_all_quotations(db: Session = Depends(get_db)):
@@ -130,7 +154,13 @@ def get_all_quotations(db: Session = Depends(get_db)):
                 "design": q.design,
                 "status": q.status,
                 "amount": q.amount,
-                "date": q.date,
+                "date": q.date.isoformat() if q.date else None,
+                "client_name": q.client_name,
+                "client_email": q.client_email,
+                "client_mobile": q.client_mobile,
+                "hero_image": q.hero_image,
+                "gallery_images": q.gallery_images.split(",") if q.gallery_images else [],
+                
                 "agent": {
                     "name": q.agent.name,
                     "email": q.agent.email,
@@ -144,51 +174,13 @@ def get_all_quotations(db: Session = Depends(get_db)):
                     "licence": q.company.licence,
                     "logo_url": q.company.logo_url
                 } if q.company else None,
-                "trip": {
-                    "display_title": q.trip.display_title,
-                    "overview": q.trip.overview,
-                    "hero_image": q.trip.hero_image,
-                    "gallery_images": q.trip.gallery_images.split(",") if q.trip.gallery_images else [],
-                    "sections": [
-                        {"title": s.title, "content": s.content}
-                        for s in db.query(QuotationTripSection)
-                        .filter_by(quotation_id=q.id, is_deleted=False)
-                        .all()
-                    ]
-                } if q.trip else None,
-                "itinerary": [
-                    {"day": i.day, "title": i.title, "description": i.description}
-                    for i in q.itinerary if not i.is_deleted
-                ],
-                "costing": {
-                    "type": q.costing.type,
-                    "currency": q.costing.currency,
-                    "total_amount": q.costing.total_amount,
-                    "items": q.costing.items
-                } if q.costing else None,
-                "policies": {
-                    "payment_terms": q.policies.payment_terms,
-                    "cancellation_policy": q.policies.cancellation_policy,
-                    "terms_and_conditions": q.policies.terms_and_conditions,
-                    "custom_policy": q.policies.custom_policy
-                } if q.policies else None,
-                "payment": {
-                    "bank_name": q.payment.bank_name,
-                    "account_number": q.payment.account_number,
-                    "ifsc_code": q.payment.ifsc_code,
-                    "branch_name": q.payment.branch_name,
-                    "gst_number": q.payment.gst_number,
-                    "address": q.payment.address,
-                    "upi_ids": q.payment.upi_ids.split(",") if q.payment.upi_ids else [],
-                    "qr_code_url": q.payment.qr_code_url
-                } if q.payment else None
             }
             data.append(item)
 
         return api_json_response_format(True, "All quotations retrieved.", 200, data)
 
     except Exception as e:
-        return api_json_response_format(False, f"Error retrieving quotations: {e}", 500, {})
+        raise HTTPException(status_code=500, detail=f"Error retrieving quotations: {str(e)}")
 
 
 # ------------------------------------------------------
@@ -202,7 +194,7 @@ def get_full_quotation(quotation_id: int, db: Session = Depends(get_db)):
         ).first()
 
         if not quotation:
-            return api_json_response_format(False, "Quotation not found", 404, {})
+            raise HTTPException(status_code=404, detail="Quotation not found")
 
         data = {
             "id": quotation.id,
@@ -210,12 +202,22 @@ def get_full_quotation(quotation_id: int, db: Session = Depends(get_db)):
             "design": quotation.design,
             "status": quotation.status,
             "amount": quotation.amount,
-            "date": quotation.date,
+            "date": quotation.date.isoformat() if quotation.date else None, 
+            
+            "client_name": quotation.client_name,
+            "client_email": quotation.client_email,
+            "client_mobile": quotation.client_mobile,
+            
+            # Images from main table
+            "hero_image": quotation.hero_image,
+            "gallery_images": quotation.gallery_images.split(",") if quotation.gallery_images else [],
+            
             "agent": {
                 "name": quotation.agent.name,
                 "email": quotation.agent.email,
                 "contact": quotation.agent.contact
             } if quotation.agent else None,
+            
             "company": {
                 "name": quotation.company.name,
                 "email": quotation.company.email,
@@ -224,7 +226,9 @@ def get_full_quotation(quotation_id: int, db: Session = Depends(get_db)):
                 "licence": quotation.company.licence,
                 "logo_url": quotation.company.logo_url
             } if quotation.company else None,
+            
             "trip": {
+                "trip_id": quotation.trip.trip_id,
                 "display_title": quotation.trip.display_title,
                 "overview": quotation.trip.overview,
                 "hero_image": quotation.trip.hero_image,
@@ -236,22 +240,29 @@ def get_full_quotation(quotation_id: int, db: Session = Depends(get_db)):
                     .all()
                 ]
             } if quotation.trip else None,
+            
             "itinerary": [
                 {"day": i.day, "title": i.title, "description": i.description}
                 for i in quotation.itinerary if not i.is_deleted
             ],
+            
+            # COSTING - RETURN BOTH PACKAGES AND ITEMS (WITH IMAGES)
             "costing": {
                 "type": quotation.costing.type,
                 "currency": quotation.costing.currency,
                 "total_amount": quotation.costing.total_amount,
-                "items": quotation.costing.items
+                "selected_package_id": quotation.costing.selected_package_id,
+                "packages": quotation.costing.packages or [],
+                "items": quotation.costing.items or []
             } if quotation.costing else None,
+            
             "policies": {
                 "payment_terms": quotation.policies.payment_terms,
                 "cancellation_policy": quotation.policies.cancellation_policy,
                 "terms_and_conditions": quotation.policies.terms_and_conditions,
                 "custom_policy": quotation.policies.custom_policy
             } if quotation.policies else None,
+            
             "payment": {
                 "bank_name": quotation.payment.bank_name,
                 "account_number": quotation.payment.account_number,
@@ -267,7 +278,7 @@ def get_full_quotation(quotation_id: int, db: Session = Depends(get_db)):
         return api_json_response_format(True, "Full quotation retrieved.", 200, data)
 
     except Exception as e:
-        return api_json_response_format(False, f"Error retrieving full quotation: {e}", 500, {})
+        raise HTTPException(status_code=500, detail=f"Error retrieving quotation: {str(e)}")
 
 
 # ------------------------------------------------------
@@ -282,7 +293,7 @@ def update_quotation(quotation_id: int, quotation_in: QuotationUpdate, db: Sessi
         ).first()
 
         if not quotation:
-            return api_json_response_format(False, "Quotation not found", 404, {})
+            raise HTTPException(status_code=404, detail="Quotation not found")
 
         # BASE FIELDS
         if quotation_in.design is not None:
@@ -293,8 +304,23 @@ def update_quotation(quotation_id: int, quotation_in: QuotationUpdate, db: Sessi
             quotation.amount = quotation_in.amount
         if quotation_in.date is not None:
             quotation.date = quotation_in.date
+            
+        if quotation_in.client_name is not None:
+            quotation.client_name = quotation_in.client_name
+        if quotation_in.client_email is not None:
+            quotation.client_email = quotation_in.client_email
+        if quotation_in.client_mobile is not None:
+            quotation.client_mobile = quotation_in.client_mobile
+        
+        # Update images from trip object
+        if quotation_in.trip:
+            hero_image = quotation_in.trip.hero_image or ""
+            gallery_images_str = clean_gallery_images(quotation_in.trip.gallery_images)
+            
+            quotation.hero_image = hero_image
+            quotation.gallery_images = gallery_images_str
 
-        # DELETE OLD DATA
+        # DELETE OLD RELATED DATA (for atomic update)
         db.query(QuotationAgent).filter_by(quotation_id=quotation_id).delete()
         db.query(QuotationCompany).filter_by(quotation_id=quotation_id).delete()
         db.query(QuotationTripSection).filter_by(quotation_id=quotation_id).delete()
@@ -313,12 +339,16 @@ def update_quotation(quotation_id: int, quotation_in: QuotationUpdate, db: Sessi
 
         if quotation_in.trip:
             trip = quotation_in.trip
+            hero_image = trip.hero_image or ""
+            gallery_images_str = clean_gallery_images(trip.gallery_images)
+            
             db.add(QuotationTrip(
                 quotation_id=quotation_id,
+                trip_id=trip.trip_id,
                 display_title=trip.display_title,
                 overview=trip.overview,
-                hero_image=trip.hero_image,
-                gallery_images=",".join(trip.gallery_images)
+                hero_image=hero_image,
+                gallery_images=gallery_images_str
             ))
 
             for section in trip.sections:
@@ -328,14 +358,16 @@ def update_quotation(quotation_id: int, quotation_in: QuotationUpdate, db: Sessi
             for item in quotation_in.itinerary:
                 db.add(QuotationItinerary(quotation_id=quotation_id, **item.model_dump()))
 
-        # COSTING (UPDATED)
+        # COSTING - SUPPORT BOTH PACKAGES AND ITEMS (WITH IMAGES)
         if quotation_in.costing:
             costing_data = {
                 "quotation_id": quotation_id,
                 "type": quotation_in.costing.type,
                 "currency": quotation_in.costing.currency,
                 "total_amount": quotation_in.costing.total_amount,
-                "items": [item.model_dump() for item in quotation_in.costing.items]
+                "selected_package_id": quotation_in.costing.selected_package_id,
+                "packages": [pkg.model_dump() for pkg in quotation_in.costing.packages] if quotation_in.costing.packages else [],
+                "items": [item.model_dump() for item in quotation_in.costing.items] if quotation_in.costing.items else []
             }
             db.add(QuotationCosting(**costing_data))
 
@@ -353,7 +385,7 @@ def update_quotation(quotation_id: int, quotation_in: QuotationUpdate, db: Sessi
 
     except Exception as e:
         db.rollback()
-        return api_json_response_format(False, f"Error updating quotation: {e}", 500, {})
+        raise HTTPException(status_code=500, detail=f"Error updating quotation: {str(e)}")
 
 
 # ------------------------------------------------------
@@ -365,7 +397,7 @@ def delete_quotation(quotation_id: int, db: Session = Depends(get_db)):
         q = db.query(Quotation).filter(Quotation.id == quotation_id).first()
 
         if not q:
-            return api_json_response_format(False, "Quotation not found", 404, {})
+            raise HTTPException(status_code=404, detail="Quotation not found")
 
         q.is_deleted = True
 
@@ -383,7 +415,7 @@ def delete_quotation(quotation_id: int, db: Session = Depends(get_db)):
 
     except Exception as e:
         db.rollback()
-        return api_json_response_format(False, f"Error deleting quotation: {e}", 500, {})
+        raise HTTPException(status_code=500, detail=f"Error deleting quotation: {str(e)}")
 
 
 # ------------------------------------------------------
@@ -408,4 +440,4 @@ def hard_delete_quotation(quotation_id: int, db: Session = Depends(get_db)):
 
     except Exception as e:
         db.rollback()
-        return api_json_response_format(False, f"Error permanently deleting quotation: {e}", 500, {})
+        raise HTTPException(status_code=500, detail=f"Error permanently deleting quotation: {str(e)}")

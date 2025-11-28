@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Float
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Float,Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from core.database import Base
@@ -36,6 +36,11 @@ class Trip(Base):
     terms = Column(Text)
     privacy_policy = Column(Text)
     payment_terms = Column(Text)
+    feature_trip_flag = Column(Boolean, default=False)
+    feature_trip_type = Column(String(50))
+    meta_title = Column(String(255))
+    meta_description = Column(Text)
+    display_order = Column(Integer)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
