@@ -5,12 +5,12 @@ from datetime import datetime
 # -------------------- Itinerary --------------------
 
 class ItineraryItem(BaseModel):
-    day_number: Optional[int]
-    title: Optional[str]
-    description: Optional[str]
+    day_number: Optional[int] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
     image_urls: Optional[List[str]] = []
     activities: Optional[List[str]] = []
-    hotel_name: Optional[str]
+    hotel_name: Optional[str] = None
     meal_plan: Optional[List[str]] = []
 
 class ItineraryOut(ItineraryItem):
@@ -49,10 +49,10 @@ class FixedDepartureOut(FixedDeparture):
 
 
 class CustomizedPricing(BaseModel):
-    pricing_type: Optional[str]
-    base_price: Optional[float]
-    discount: Optional[float]
-    final_price: Optional[float]
+    pricing_type: Optional[str] = None
+    base_price: Optional[float] = None
+    discount: Optional[float] = None
+    final_price: Optional[float] = None
 
 
 class CustomizedOut(CustomizedPricing):
@@ -60,7 +60,7 @@ class CustomizedOut(CustomizedPricing):
 
 
 class TripPricingSchema(BaseModel):
-    pricing_model: Optional[Literal["fixed_departure", "customized"]]
+    pricing_model: Optional[Literal["fixed_departure", "customized"]] = None
     fixed_departure: Optional[List[FixedDeparture]] = None
     customized: Optional[CustomizedPricing] = None
 
@@ -78,7 +78,7 @@ class TripPricingSchema(BaseModel):
 
 
 class TripPricingOut(BaseModel):
-    pricing_model: Optional[str]
+    pricing_model: Optional[str] = None
     fixed_departure: Optional[List[FixedDepartureOut]] = []
     customized: Optional[CustomizedOut] = None
 
@@ -86,8 +86,8 @@ class TripPricingOut(BaseModel):
 # -------------------- Policies --------------------
 
 class TripPolicySchema(BaseModel):
-    title: Optional[str]
-    content: Optional[str]
+    title: Optional[str] = None
+    content: Optional[str] = None
 
 
 class TripPolicyOut(TripPolicySchema):
@@ -97,70 +97,70 @@ class TripPolicyOut(TripPolicySchema):
 # -------------------- TripCreate --------------------
 
 class TripCreate(BaseModel):
-    title: Optional[str]
-    overview: Optional[str]
-    destination_id: Optional[int]
-    destination_type: Optional[str]
+    title: Optional[str] = None
+    overview: Optional[str] = None
+    destination_id: Optional[int] = None
+    destination_type: Optional[str] = None
     category_id: Optional[List[str]] = []
     themes: Optional[List[str]] = []
-    hotel_category: Optional[int]
-    pickup_location: Optional[str]
-    drop_location: Optional[str]
-    days: Optional[int]
-    nights: Optional[int]
-    meta_tags: Optional[str]
-    hero_image: Optional[str]
+    hotel_category: Optional[int] = None
+    pickup_location: Optional[str] = None
+    drop_location: Optional[str] = None
+    days: Optional[int] = None
+    nights: Optional[int] = None
+    meta_tags: Optional[str] = None
+    hero_image: Optional[str] = None
     gallery_images: Optional[List[str]] = []
-    slug: Optional[str]
-    pricing_model: Optional[str]
-    highlights: Optional[str]
-    inclusions: Optional[str]
-    exclusions: Optional[str]
+    slug: Optional[str] = None
+    pricing_model: Optional[str] = None
+    highlights: Optional[str] = None
+    inclusions: Optional[str] = None
+    exclusions: Optional[str] = None
     faqs: Optional[List[dict]] = []
-    terms: Optional[str]
-    privacy_policy: Optional[str]
-    payment_terms: Optional[str]
+    terms: Optional[str] = None
+    privacy_policy: Optional[str] = None
+    payment_terms: Optional[str] = None
     itinerary: Optional[List[ItineraryItem]] = []
-    pricing: Optional[TripPricingSchema]
+    pricing: Optional[TripPricingSchema] = None
     policies: Optional[List[TripPolicySchema]] = []
     feature_trip_flag: Optional[bool] = False
-    feature_trip_type: Optional[str]
-    meta_title: Optional[str]
-    meta_description: Optional[str]
-    display_order: Optional[int]
+    feature_trip_type: Optional[str] = None  # ✅ Already optional with default None
+    meta_title: Optional[str] = None  # ✅ Already optional with default None
+    meta_description: Optional[str] = None  # ✅ Already optional with default None
+    display_order: Optional[int] = None  # ✅ Already optional with default None
 
 
 # -------------------- TripOut --------------------
 
 class TripOut(BaseModel):
-    id: Optional[int]
-    title: Optional[str]
-    overview: Optional[str]
-    destination_id: Optional[int]
-    destination_type: Optional[str]
+    id: Optional[int] = None
+    title: Optional[str] = None
+    overview: Optional[str] = None
+    destination_id: Optional[int] = None
+    destination_type: Optional[str] = None
     category_id: Optional[List[str]] = []
     themes: Optional[List[str]] = []
-    hotel_category: Optional[int]
-    pickup_location: Optional[str]
-    drop_location: Optional[str]
-    days: Optional[int]
-    nights: Optional[int]
-    meta_tags: Optional[str]
-    hero_image: Optional[str]
+    hotel_category: Optional[int] = None
+    pickup_location: Optional[str] = None
+    drop_location: Optional[str] = None
+    days: Optional[int] = None
+    nights: Optional[int] = None
+    meta_tags: Optional[str] = None
+    hero_image: Optional[str] = None
     gallery_images: Optional[List[str]] = []
-    slug: Optional[str]
-    pricing_model: Optional[str]
-    highlights: Optional[str]
-    inclusions: Optional[str]
-    exclusions: Optional[str]
+    slug: Optional[str] = None
+    pricing_model: Optional[str] = None
+    highlights: Optional[str] = None
+    inclusions: Optional[str] = None
+    exclusions: Optional[str] = None
     faqs: Optional[dict] = {}
-    terms: Optional[str]
-    privacy_policy: Optional[str]
-    payment_terms: Optional[str]
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
+    terms: Optional[str] = None
+    privacy_policy: Optional[str] = None
+    payment_terms: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     itinerary: Optional[List[ItineraryOut]] = []
-    pricing: Optional[TripPricingOut]
+    pricing: Optional[TripPricingOut] = None
     policies: Optional[List[TripPolicyOut]] = []
 
     class Config:

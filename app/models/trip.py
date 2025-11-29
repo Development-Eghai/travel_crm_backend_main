@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Float,Boolean
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Float, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from core.database import Base
@@ -15,7 +15,6 @@ class Trip(Base):
     overview = Column(Text)
     destination_id = Column(Integer, nullable=False)
     destination_type = Column(String(50), nullable=False)
-    # categories = Column(Text)  # comma-separated
     category_id = Column(Text)
     themes = Column(Text)      # comma-separated
     hotel_category = Column(Integer)
@@ -31,16 +30,15 @@ class Trip(Base):
     exclusions = Column(Text)
     hero_image = Column(String) 
     gallery_images = Column(Text)  
-    # faqs = Column(Text)
     faqs = Column(JSON)
     terms = Column(Text)
     privacy_policy = Column(Text)
     payment_terms = Column(Text)
     feature_trip_flag = Column(Boolean, default=False)
-    feature_trip_type = Column(String(50))
-    meta_title = Column(String(255))
-    meta_description = Column(Text)
-    display_order = Column(Integer)
+    feature_trip_type = Column(String(50), nullable=True)  # ✅ Made nullable
+    meta_title = Column(String(255), nullable=True)  # ✅ Made nullable
+    meta_description = Column(Text, nullable=True)  # ✅ Made nullable
+    display_order = Column(Integer, nullable=True)  # ✅ Made nullable
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
@@ -49,7 +47,6 @@ class Trip(Base):
     media = relationship("TripMedia", uselist=False, back_populates="trip", cascade="all, delete-orphan")
     pricing = relationship("TripPricing", uselist=False, back_populates="trip", cascade="all, delete-orphan")
     policies = relationship("TripPolicy", back_populates="trip", cascade="all, delete-orphan")
-    # category = relationship("Category", back_populates="trips", uselist=False)
 
 # -------------------- Itinerary --------------------
 
