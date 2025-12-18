@@ -34,11 +34,13 @@ from api.booking_request import booking_router
 from api.trip_inquiries import trip_inquiry_router
 from core.security import verify_api_key
 from api.user import user_router
+
+# ========== UPDATED: Added landing_page to imports ==========
 from api import (
     trip, destination, activity, trip_type, lead, lead_comments, quotation,
     bookings, category, trip_day, fixed_departure, lead_assignment, task,
     role, site_setting, activity_type, blog_post, tag, blog_category,
-    quotation_item, booking_request
+    quotation_item, booking_request, landing_page
 )
 
 #Email-Util
@@ -91,9 +93,11 @@ secure_app.include_router(trip_inquiry_router, prefix="/api/trip_enquires", tags
 secure_app.include_router(booking_router, prefix="/api/booking_request", tags=["Booking Requests"])
 secure_app.include_router(enquire_router, prefix="/api/enquires", tags=["Enquires"])
 
-
 #EmailUtil
 secure_app.include_router(user_smtp_router, prefix="/api/user-settings", tags=["User Settings"])
+
+# ========== NEW: Landing Pages Router ==========
+secure_app.include_router(landing_page.router, prefix="/api/landing-pages", tags=["Landing Pages"])
 
 # ---- GLOBAL DELETE (correct placement) ----
 secure_app.include_router(global_delete_router, prefix="/api/global", tags=["Global Delete"])
@@ -168,11 +172,13 @@ def gateway_root():
     return {"msg": "Travel CRM Gateway is live with multi-tenancy"}
 
 # --------------------------------------------------------------
-# IMAGE UPLOAD
+# IMAGE/VIDEO UPLOAD
 # --------------------------------------------------------------
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+# ========== UPDATED: Added video file extensions ==========
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "webm", "mov", "avi", "mkv"}
 
 IMG_URL = "https://api.yaadigo.com/uploads"
 
@@ -183,6 +189,10 @@ def allowed_file(filename: str) -> bool:
 
 @app.post("/upload")
 def upload_image(image: UploadFile = File(...)):
+    """
+    Upload a single image or video file
+    Returns the URL of the uploaded file
+    """
     if image.filename == "":
         raise HTTPException(status_code=400, detail="No file selected")
 
@@ -197,6 +207,10 @@ def upload_image(image: UploadFile = File(...)):
 
 @app.post("/multiple")
 def upload_gallery_images(gallery_images: List[UploadFile] = File(...)):
+    """
+    Upload multiple images or videos at once
+    Returns an array of URLs for the uploaded files
+    """
     saved_files = []
     for file in gallery_images:
         filename = Path(file.filename).name
