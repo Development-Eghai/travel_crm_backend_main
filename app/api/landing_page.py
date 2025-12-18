@@ -72,18 +72,22 @@ def create_landing_page(
     db.commit()
     db.refresh(db_landing_page)
     
-    # Return direct data (not wrapped) - Frontend expects this
-    return db_landing_page
+    # Return with success message
+    return {
+        "success": True,
+        "message": "Landing Page Created Successfully",
+        "data": db_landing_page
+    }
 
 
 # ============================
-# LIST LANDING PAGES
+# LIST LANDING PAGES (WITH PAGINATION)
 # ============================
 @router.get("/", response_model=PaginatedLandingPages)
 def get_all_landing_pages(
     request: Request,
     page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=100),
+    per_page: int = Query(10, ge=1, le=100),  # Max 100 per page
     search: Optional[str] = None,
     is_active: Optional[bool] = None,
     db: Session = Depends(get_db)
@@ -121,6 +125,39 @@ def get_all_landing_pages(
         per_page=per_page,
         total_pages=total_pages
     )
+
+
+# ============================
+# GET ALL LANDING PAGES (NO PAGINATION)
+# ============================
+@router.get("/all")
+def get_all_landing_pages_no_pagination(
+    request: Request,
+    search: Optional[str] = None,
+    is_active: Optional[bool] = None,
+    db: Session = Depends(get_db)
+):
+    """Get ALL landing pages without pagination - for frontend list"""
+    user_id, domain_name = get_user_id_and_domain(request)
+    
+    # Base query
+    query = db.query(LandingPage).filter(
+        LandingPage.user_id == user_id,
+        LandingPage.is_deleted == False
+    )
+    
+    # Apply filters
+    if search:
+        query = query.filter(LandingPage.page_name.ilike(f"%{search}%"))
+    
+    if is_active is not None:
+        query = query.filter(LandingPage.is_active == is_active)
+    
+    # Get all pages ordered by creation date
+    pages = query.order_by(LandingPage.created_at.desc()).all()
+    
+    # Return array directly
+    return pages
 
 
 # ============================
@@ -216,8 +253,12 @@ def update_landing_page(
     db.commit()
     db.refresh(db_landing_page)
     
-    # Return direct data (not wrapped) - Frontend expects this
-    return db_landing_page
+    # Return with success message
+    return {
+        "success": True,
+        "message": "Landing Page Updated Successfully",
+        "data": db_landing_page
+    }
 
 
 # ============================
@@ -307,30 +348,4 @@ def track_view(
     return {
         "success": True,
         "views": db_landing_page.views
-    }
-
-
-# ============================
-# TRACK LEAD (PUBLIC)
-# ============================
-@router.post("/{landing_page_id}/track-lead")
-def track_lead(
-    landing_page_id: int,
-    db: Session = Depends(get_db)
-):
-    """Increment lead count for a landing page (Public endpoint)"""
-    db_landing_page = db.query(LandingPage).filter(
-        LandingPage.id == landing_page_id,
-        LandingPage.is_deleted == False
-    ).first()
-    
-    if not db_landing_page:
-        raise HTTPException(status_code=404, detail="Landing page not found")
-    
-    db_landing_page.leads += 1
-    db.commit()
-    
-    return {
-        "success": True,
-        "leads": db_landing_page.leads
     }
