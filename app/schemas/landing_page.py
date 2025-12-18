@@ -30,15 +30,17 @@ class Hero(BaseModel):
     description: Optional[str] = ""
     cta_button_1: CTAButton = CTAButton()
     cta_button_2: CTAButton = CTAButton()
+    background_type: Optional[str] = "slider"  # Added this field from frontend
     background_images: List[str] = []
     background_videos: List[str] = []
 
 class SelectedTrip(BaseModel):
     trip_id: int
     badge: str = ""
-    trip_title: str
-    trip_price: str
-    trip_image: str
+    trip_title: str = ""
+    price: str = ""
+    pricing_model: Optional[str] = ""
+    image: Optional[str] = ""
 
 class Packages(BaseModel):
     section_title: str = "Popular Tour Packages"
@@ -98,13 +100,10 @@ class BannerConfig(BaseModel):
     enabled: bool = False
     text: str = ""
 
-class MediaItem(BaseModel):
-    type: str  # 'image' or 'video'
-    url: str
-
 class MidSection(BaseModel):
     enabled: bool = False
-    media: List[MediaItem] = []
+    type: str = "image"  # 'image' or 'video'
+    media_urls: List[str] = []  # Changed from media_url to media_urls (array)
 
 class PopupConfig(BaseModel):
     enabled: bool = False
