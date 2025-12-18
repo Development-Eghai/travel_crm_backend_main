@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query,Header
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from core.database import get_db
 from schemas.trip import TripCreate
 from pydantic import BaseModel
-from typing import List # <--- REQUIRED: For List[int] in Query parameters
+from typing import List, Optional
 from crud.trip import (
     create_trip,
     get_trips,
@@ -13,6 +13,7 @@ from crud.trip import (
     update_trip
 )
 from models.api_key import APIKey
+
 router = APIRouter()
 
 # ✅ Unified response format
@@ -28,8 +29,9 @@ def api_json_response_format(status: bool, message: str, error_code: int, data: 
 @router.get("/", response_model=dict)
 def list_trips(
     skip: int = Query(0, ge=0), 
-    limit: int = Query(1000, le=1000), 
-    category_ids: List[int] = Query(None, description="List of category IDs to filter by (OR logic applied)."), # <--- MODIFIED: Accepts multiple category IDs
+    limit: int = Query(1000, le=1000),
+    feature_trip_type: Optional[str] = Query(None),
+    category_ids: List[int] = Query(None, description="List of category IDs to filter by (OR logic applied)."),
     db: Session = Depends(get_db), 
     x_api_key: str = Header(None)
 ) -> dict:
@@ -44,8 +46,7 @@ def list_trips(
 
         user_id = api_key_entry.user_id
         
-        # MODIFIED: Pass the new category_ids filter list to the CRUD function
-        trips = get_trips(db, user_id, skip=skip, limit=limit, category_ids=category_ids)
+        trips = get_trips(db, user_id, skip=skip, limit=limit, category_ids=category_ids, feature_trip_type=feature_trip_type)   
 
         return api_json_response_format(True, "Trips fetched successfully", 0, trips)
     except Exception as e:
@@ -64,10 +65,8 @@ def get_trip_by_id_endpoint(trip_id: int, db: Session = Depends(get_db)) -> dict
 
 # ✅ Create new trip
 @router.post("/", response_model=dict)
-def create_trip_endpoint(trip: TripCreate, db: Session = Depends(get_db),x_api_key: str = Header(None)) -> dict:
+def create_trip_endpoint(trip: TripCreate, db: Session = Depends(get_db), x_api_key: str = Header(None)) -> dict:
     try:
-        
-
         if not x_api_key:
             raise HTTPException(status_code=401, detail="x-api-key header missing")
         
@@ -76,7 +75,7 @@ def create_trip_endpoint(trip: TripCreate, db: Session = Depends(get_db),x_api_k
             raise HTTPException(status_code=401, detail="Invalid API key")
 
         user_id = int(api_key_entry.user_id)        
-        new_trip = create_trip(db, trip,user_id)
+        new_trip = create_trip(db, trip, user_id)
         data = serialize_trip(new_trip)
         return api_json_response_format(True, "Trip created successfully", 0, data)
     except Exception as e:
@@ -114,9 +113,9 @@ def get_multiple_trips(payload: TripIdList, db: Session = Depends(get_db)) -> di
     try:
         trips = []
         for trip_id in payload.trip_ids:
-            trip = get_trip_by_id(db, trip_id)  # Already serialized
+            trip = get_trip_by_id(db, trip_id)
             if trip:
-                trips.append(trip)  # No need to call serialize_trip again
+                trips.append(trip)
         if not trips:
             return api_json_response_format(False, "No trips found for given IDs", 404, [])
         return api_json_response_format(True, "Trips fetched successfully", 0, trips)

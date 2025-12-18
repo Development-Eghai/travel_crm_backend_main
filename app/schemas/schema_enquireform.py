@@ -2,6 +2,9 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 
+# ------------------------------------------------------
+# CREATE SCHEMA
+# ------------------------------------------------------
 class EnquireFormCreate(BaseModel):
     destination: str = Field(..., max_length=100)
     departure_city: str = Field(..., max_length=100)
@@ -14,11 +17,39 @@ class EnquireFormCreate(BaseModel):
     contact_number: str = Field(..., max_length=20)
     email: EmailStr
     additional_comments: Optional[str] = None
+
+    # Needed only for CREATE — identifies tenant site
     domain_name: Optional[str] = None
 
 
+# ------------------------------------------------------
+# UPDATE SCHEMA (ALL OPTIONAL FIELDS)
+# ------------------------------------------------------
+class EnquireFormUpdate(BaseModel):
+    destination: Optional[str] = None
+    departure_city: Optional[str] = None
+    travel_date: Optional[str] = None
+    adults: Optional[int] = None
+    children: Optional[int] = None
+    infants: Optional[int] = None
+    hotel_category: Optional[str] = None
+    full_name: Optional[str] = None
+    contact_number: Optional[str] = None
+    email: Optional[EmailStr] = None
+    additional_comments: Optional[str] = None
+
+    # UPDATE never requires domain_name
+    class Config:
+        extra = "forbid"
+
+
+# ------------------------------------------------------
+# OUTPUT SCHEMA
+# ------------------------------------------------------
 class EnquireFormOut(BaseModel):
     id: int
+    enquiry_id: Optional[int] = None
+
     destination: str
     departure_city: str
     travel_date: str
@@ -30,10 +61,11 @@ class EnquireFormOut(BaseModel):
     contact_number: str
     email: EmailStr
     additional_comments: Optional[str]
+
     created_at: datetime
     updated_at: datetime
 
-    is_deleted: bool   # NEW
+    is_deleted: bool
 
     class Config:
         from_attributes = True

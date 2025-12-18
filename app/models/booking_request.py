@@ -6,6 +6,9 @@ class BookingRequest(Base):
     __tablename__ = "booking_requests"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+
+    booking_id = Column(Integer, unique=True, index=True, nullable=True)   # <-- NEW FIELD
+
     user_id = Column(Integer, default=0)
 
     departure_date = Column(String(50), nullable=False)
@@ -20,8 +23,7 @@ class BookingRequest(Base):
 
     domain_name = Column(String(100), nullable=True)
 
-    # NEW FIELD
-    is_deleted = Column(Boolean, default=False)   # ← Soft delete column
+    is_deleted = Column(Boolean, default=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

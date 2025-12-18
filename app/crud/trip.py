@@ -10,6 +10,7 @@ from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from typing import Optional
 
 from models.trip import Itinerary, Trip, TripMedia, TripPolicy, TripPricing
 from schemas.trip import TripCreate
@@ -117,8 +118,9 @@ def create_trip(db: Session, payload: TripCreate, user_id: int):
 
 # -------------------- Read --------------------
 
-def get_trips(db: Session, user_id: int, skip: int = 0, limit: int = 10, category_ids: List[int] = None) -> list:
+def get_trips(db: Session, user_id: int, skip: int = 0, limit: int = 10, category_ids: List[int] = None,feature_trip_type: Optional[str] = None) -> list:
     query = db.query(Trip).filter(Trip.user_id == user_id)
+
 
     # Filter by multiple category IDs (OR logic)
     if category_ids and len(category_ids) > 0:
@@ -134,7 +136,8 @@ def get_trips(db: Session, user_id: int, skip: int = 0, limit: int = 10, categor
                 )
             )
         query = query.filter(or_(*filter_conditions))
-
+    if feature_trip_type:
+        query = query.filter(Trip.feature_trip_type == feature_trip_type)
     trips = query.order_by(Trip.created_at.desc()).offset(skip).limit(limit).all()
     return [serialize_trip(t) for t in trips]
 
@@ -284,6 +287,11 @@ def serialize_trip(trip: Trip) -> dict:
         "created_at": trip.created_at,
         "updated_at": trip.updated_at,
         "hero_image": trip.hero_image,
+        "meta_title": trip.meta_title,
+        "meta_description" : trip.meta_description,
+        "feature_trip_flag": trip.feature_trip_flag,
+        "feature_trip_type" : trip.feature_trip_type,
+        "display_order" : trip.display_order,
         "gallery_images": json.loads(trip.gallery_images) if trip.gallery_images else [],
         "pricing": normalize_fixed_departure(trip.pricing.data) if trip.pricing else None,
         "policies": [{"title": p.title, "content": p.content} for p in trip.policies] if trip.policies else [],
