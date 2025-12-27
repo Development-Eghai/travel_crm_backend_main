@@ -24,7 +24,7 @@ class LiveBookingNotifications(BaseModel):
 
 # ===== 2. COMPANY ABOUT SECTION =====
 class Highlight(BaseModel):
-    """Individual highlight item with icon"""
+    """Individual highlight item with icon and text"""
     text: str
     icon: Optional[str] = "star"
 
@@ -55,6 +55,17 @@ class ContactInfo(BaseModel):
     value: str
     label: Optional[str] = ""
 
+class AddressInfo(BaseModel):
+    """Address with optional map link"""
+    label: Optional[str] = "Head Office"
+    street: str
+    city: str
+    state: str
+    country: str
+    postal_code: str
+    map_link: Optional[str] = ""
+    is_primary: bool = False
+
 class SocialMediaLink(BaseModel):
     """Social media link"""
     platform: str
@@ -71,8 +82,8 @@ class Company(BaseModel):
     emails: List[ContactInfo] = []
     phones: List[ContactInfo] = []
     
-    # Addresses as simple strings
-    addresses: List[str] = []
+    # Addresses as objects with map link support
+    addresses: List[AddressInfo] = []
     
     social_media: List[SocialMediaLink] = []
     business_hours: Optional[str] = ""
