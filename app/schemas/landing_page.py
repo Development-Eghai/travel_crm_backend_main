@@ -1,28 +1,135 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 
 # ============= SUB-SCHEMAS =============
 
-class SocialMedia(BaseModel):
-    facebook: Optional[str] = ""
-    instagram: Optional[str] = ""
-    twitter: Optional[str] = ""
-    youtube: Optional[str] = ""
+# ===== 1. LIVE BOOKING NOTIFICATIONS (Social Proof Widget) =====
+class BookingNotification(BaseModel):
+    """Single booking notification entry"""
+    name: str
+    location: str
+    destination: str
+    time: str
+
+class LiveBookingNotifications(BaseModel):
+    """Live booking notification popups (Social Proof)"""
+    enabled: bool = True
+    notifications: List[BookingNotification] = []
+    display_duration: int = 5
+    interval_between: int = 10
+    position: str = "bottom-left"
+    show_on_mobile: bool = True
+
+
+# ===== 2. COMPANY ABOUT SECTION =====
+class Highlight(BaseModel):
+    """Individual highlight item with icon"""
+    text: str
+    icon: Optional[str] = "star"
+
+class TeamMember(BaseModel):
+    """Team member information"""
+    name: str
+    role: str
+    image: str
+    bio: Optional[str] = ""
+    social_links: Optional[Dict[str, str]] = {}
+
+class CompanyAbout(BaseModel):
+    """Complete About Us section"""
+    section_title: str = "About Us"
+    section_subtitle: str = "Your Trusted Travel Partner"
+    logo: str = ""
+    heading: str = "Crafting Unforgettable Journeys"
+    tagline: str = "Since 2015"
+    description: str = ""
+    highlights: List[Highlight] = []
+    team_members: List[TeamMember] = []
+    show_section: bool = True
+
+
+# ===== 3. ENHANCED COMPANY INFO =====
+class ContactInfo(BaseModel):
+    """Single contact entry with value and label"""
+    value: str
+    label: Optional[str] = ""
+
+class SocialMediaLink(BaseModel):
+    """Social media link"""
+    platform: str
+    url: str
+    icon: Optional[str] = ""
 
 class Company(BaseModel):
-    name: Optional[str] = ""
-    contact: Optional[str] = ""
-    social_media: Optional[SocialMedia] = SocialMedia()
+    """Enhanced company information"""
+    name: str = ""
+    tagline: Optional[str] = ""
+    logo: Optional[str] = ""
+    
+    # Contact info as objects with value and label
+    emails: List[ContactInfo] = []
+    phones: List[ContactInfo] = []
+    
+    # Addresses as simple strings
+    addresses: List[str] = []
+    
+    social_media: List[SocialMediaLink] = []
+    business_hours: Optional[str] = ""
 
+
+# ===== 4. CUSTOM PACKAGES =====
+class CustomPackage(BaseModel):
+    """Custom package grouping multiple trips"""
+    title: str
+    description: str
+    trip_ids: List[int]
+    badge: Optional[str] = ""
+    discount_text: Optional[str] = ""
+
+class Packages(BaseModel):
+    """Updated packages section with custom packages"""
+    section_title: str = "Tour Packages"
+    section_subtitle: str = "Explore our hand-picked packages"
+    selected_trips: List['SelectedTrip'] = []
+    custom_packages: List[CustomPackage] = []
+    show_section: bool = True
+
+
+# ===== 5. THEME COLORS =====
+class ThemeColors(BaseModel):
+    """Global theme color configuration"""
+    primary_color: str = "#3B82F6"
+    secondary_color: str = "#10B981"
+    text_primary: str = "#1F2937"
+    text_secondary: str = "#6B7280"
+    text_light: str = "#9CA3AF"
+    background_primary: str = "#FFFFFF"
+    background_secondary: str = "#F9FAFB"
+    background_dark: str = "#111827"
+    button_primary_bg: str = "#3B82F6"
+    button_primary_text: str = "#FFFFFF"
+    button_secondary_bg: str = "#E5E7EB"
+    button_secondary_text: str = "#1F2937"
+    border_color: str = "#E5E7EB"
+    success_color: str = "#10B981"
+    warning_color: str = "#F59E0B"
+    error_color: str = "#EF4444"
+    overlay_color: str = "rgba(0, 0, 0, 0.5)"
+    custom_css: Optional[str] = ""
+
+
+# ===== EXISTING SCHEMAS =====
 class SEO(BaseModel):
     meta_title: Optional[str] = ""
     meta_description: Optional[str] = ""
     meta_tags: Optional[str] = ""
+    og_image: Optional[str] = ""
 
 class CTAButton(BaseModel):
     text: str = "Book Now"
     link: str = ""
+    style: Optional[str] = "primary"
 
 class Hero(BaseModel):
     title: str
@@ -30,23 +137,24 @@ class Hero(BaseModel):
     description: Optional[str] = ""
     cta_button_1: CTAButton = CTAButton()
     cta_button_2: CTAButton = CTAButton()
-    background_type: Optional[str] = "slider"  # ADDED: This was missing!
+    background_type: Optional[str] = "slider"
     background_images: List[str] = []
     background_videos: List[str] = []
+    overlay_opacity: Optional[float] = 0.4
 
 class SelectedTrip(BaseModel):
+    """Selected trip with flexible fields"""
     trip_id: int
-    badge: str = ""
-    trip_title: str = ""  # CHANGED: Made optional with default
-    price: str = ""  # CHANGED: Changed from trip_price to price
-    pricing_model: Optional[str] = ""  # ADDED: This was missing!
-    image: Optional[str] = ""  # CHANGED: Changed from trip_image to image
-
-class Packages(BaseModel):
-    section_title: str = "Popular Tour Packages"
-    section_subtitle: str = "Explore our hand-picked packages"
-    selected_trips: List[SelectedTrip] = []
-    show_section: bool = True
+    badge: Optional[str] = ""
+    title: Optional[str] = ""
+    slug: Optional[str] = ""
+    days: Optional[int] = None
+    nights: Optional[int] = None
+    price: Optional[str] = ""  # STRING for price
+    hero_image: Optional[str] = ""
+    highlights: Optional[List[str]] = []  # Array of strings
+    pricing_model: Optional[str] = ""
+    image: Optional[str] = ""
 
 class AttractionItem(BaseModel):
     title: str
@@ -67,11 +175,12 @@ class Gallery(BaseModel):
     show_section: bool = True
 
 class TestimonialItem(BaseModel):
+    """Testimonial item"""
     name: str
     destination: str
     rating: int = Field(ge=1, le=5)
     description: str
-    image: str
+    image: Optional[str] = ""
     date: str
 
 class Testimonials(BaseModel):
@@ -99,15 +208,21 @@ class TravelGuidelines(BaseModel):
 class BannerConfig(BaseModel):
     enabled: bool = False
     text: str = ""
+    background_color: Optional[str] = ""
+    text_color: Optional[str] = ""
 
 class MidSection(BaseModel):
     enabled: bool = False
-    type: str = "image"  # 'image' or 'video'
-    media_urls: List[str] = []  # CHANGED: This is the correct field name from frontend
+    type: str = "image"
+    media_urls: List[str] = []
 
 class PopupConfig(BaseModel):
     enabled: bool = False
     title: str = ""
+    description: Optional[str] = ""
+    image: Optional[str] = ""
+    cta_text: Optional[str] = "Get Offer"
+    cta_link: Optional[str] = ""
 
 class Popups(BaseModel):
     entry: PopupConfig = PopupConfig()
@@ -122,14 +237,19 @@ class Offers(BaseModel):
     mid_section: MidSection = MidSection()
     popups: Popups = Popups()
 
-# ============= MAIN SCHEMAS =============
 
+# ============= MAIN SCHEMAS =============
 class LandingPageBase(BaseModel):
     page_name: str
     slug: str
     template: str = "template-one"
     is_active: bool = True
+    
+    theme_colors: Optional[ThemeColors] = ThemeColors()
     company: Optional[Company] = Company()
+    company_about: Optional[CompanyAbout] = CompanyAbout()
+    live_notifications: Optional[LiveBookingNotifications] = LiveBookingNotifications()
+    
     seo: Optional[SEO] = SEO()
     hero: Hero
     packages: Optional[Packages] = Packages()
@@ -148,7 +268,10 @@ class LandingPageUpdate(BaseModel):
     slug: Optional[str] = None
     template: Optional[str] = None
     is_active: Optional[bool] = None
+    theme_colors: Optional[ThemeColors] = None
     company: Optional[Company] = None
+    company_about: Optional[CompanyAbout] = None
+    live_notifications: Optional[LiveBookingNotifications] = None
     seo: Optional[SEO] = None
     hero: Optional[Hero] = None
     packages: Optional[Packages] = None
@@ -191,3 +314,5 @@ class PaginatedLandingPages(BaseModel):
     page: int
     per_page: int
     total_pages: int
+
+Packages.model_rebuild()

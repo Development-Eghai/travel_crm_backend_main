@@ -18,11 +18,27 @@ class LandingPage(Base):
     user_id = Column(Integer, nullable=False, index=True)
     domain_name = Column(String(255), nullable=False, index=True)
     
-    # JSON Data Columns
+    # ===== JSON Data Columns =====
+    
+    # NEW: Global theme colors
+    theme_colors = Column(JSON)
+    
+    # UPDATED: Enhanced company information (multiple emails, phones, addresses)
     company = Column(JSON)
+    
+    # NEW: Company about section (logo, team, highlights)
+    company_about = Column(JSON)
+    
+    # NEW: Live booking notifications (Social Proof Widget)
+    live_notifications = Column(JSON)
+    
+    # Existing JSON columns
     seo = Column(JSON)
     hero = Column(JSON)
+    
+    # UPDATED: Packages (now includes custom_packages array)
     packages = Column(JSON)
+    
     attractions = Column(JSON)
     gallery = Column(JSON)
     testimonials = Column(JSON)
