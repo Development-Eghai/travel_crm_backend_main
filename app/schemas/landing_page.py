@@ -107,27 +107,7 @@ class Packages(BaseModel):
     show_section: bool = True
 
 
-# ===== 5. THEME COLORS =====
-class ThemeColors(BaseModel):
-    """Global theme color configuration"""
-    primary_color: str = "#3B82F6"
-    secondary_color: str = "#10B981"
-    text_primary: str = "#1F2937"
-    text_secondary: str = "#6B7280"
-    text_light: str = "#9CA3AF"
-    background_primary: str = "#FFFFFF"
-    background_secondary: str = "#F9FAFB"
-    background_dark: str = "#111827"
-    button_primary_bg: str = "#3B82F6"
-    button_primary_text: str = "#FFFFFF"
-    button_secondary_bg: str = "#E5E7EB"
-    button_secondary_text: str = "#1F2937"
-    border_color: str = "#E5E7EB"
-    success_color: str = "#10B981"
-    warning_color: str = "#F59E0B"
-    error_color: str = "#EF4444"
-    overlay_color: str = "rgba(0, 0, 0, 0.5)"
-    custom_css: Optional[str] = ""
+# ===== REMOVED: Theme colors section is now hidden =====
 
 
 # ===== EXISTING SCHEMAS =====
@@ -256,7 +236,7 @@ class LandingPageBase(BaseModel):
     template: str = "template-one"
     is_active: bool = True
     
-    theme_colors: Optional[ThemeColors] = ThemeColors()
+    # theme_colors REMOVED - hidden for now
     company: Optional[Company] = Company()
     company_about: Optional[CompanyAbout] = CompanyAbout()
     live_notifications: Optional[LiveBookingNotifications] = LiveBookingNotifications()
@@ -279,7 +259,7 @@ class LandingPageUpdate(BaseModel):
     slug: Optional[str] = None
     template: Optional[str] = None
     is_active: Optional[bool] = None
-    theme_colors: Optional[ThemeColors] = None
+    # theme_colors REMOVED
     company: Optional[Company] = None
     company_about: Optional[CompanyAbout] = None
     live_notifications: Optional[LiveBookingNotifications] = None

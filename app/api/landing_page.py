@@ -43,7 +43,7 @@ def create_landing_page(
     if existing:
         raise HTTPException(status_code=400, detail="Slug already exists")
     
-    # Create new landing page with all fields
+    # Create new landing page with all fields (theme_colors excluded)
     db_landing_page = LandingPage(
         user_id=user_id,
         domain_name=domain_name,
@@ -52,8 +52,7 @@ def create_landing_page(
         template=landing_page.template,
         is_active=landing_page.is_active,
         
-        # NEW: Theme colors
-        theme_colors=landing_page.theme_colors.dict() if landing_page.theme_colors else None,
+        # theme_colors REMOVED - field hidden
         
         # UPDATED: Enhanced company info
         company=landing_page.company.dict() if landing_page.company else None,
@@ -204,7 +203,7 @@ def update_landing_page(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Update landing page - supports all new fields"""
+    """Update landing page - supports all fields except theme_colors (hidden)"""
     user_id, domain_name = get_user_id_and_domain(request)
     
     db_landing_page = db.query(LandingPage).filter(
@@ -216,13 +215,13 @@ def update_landing_page(
     if not db_landing_page:
         raise HTTPException(status_code=404, detail="Landing page not found")
     
-    # Update all fields including new ones
+    # Update all fields (theme_colors excluded)
     update_data = landing_page_update.dict(exclude_unset=True)
     
     for field, value in update_data.items():
         if hasattr(db_landing_page, field):
             # Convert Pydantic models to dict for JSON fields
-            if field in ['theme_colors', 'company', 'company_about', 'live_notifications',
+            if field in ['company', 'company_about', 'live_notifications',
                         'seo', 'hero', 'packages', 'attractions', 'gallery', 
                         'testimonials', 'faqs', 'travel_guidelines', 'offers']:
                 if value is not None:
