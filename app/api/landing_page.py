@@ -30,7 +30,15 @@ def create_landing_page(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Create a new landing page with all new features"""
+    """
+    Create a new landing page with all features
+    
+    NEW FEATURES:
+    - Custom trips with badge and itinerary
+    - Why Choose Us section
+    - Custom sections (Format 1 & Format 2)
+    - Section ordering for rearranging
+    """
     user_id, domain_name = get_user_id_and_domain(request)
     
     # Check slug uniqueness
@@ -43,7 +51,7 @@ def create_landing_page(
     if existing:
         raise HTTPException(status_code=400, detail="Slug already exists")
     
-    # Create new landing page with all fields (theme_colors excluded)
+    # Create new landing page with all fields
     db_landing_page = LandingPage(
         user_id=user_id,
         domain_name=domain_name,
@@ -51,30 +59,22 @@ def create_landing_page(
         slug=landing_page.slug,
         template=landing_page.template,
         is_active=landing_page.is_active,
-        
-        # theme_colors REMOVED - field hidden
-        
-        # UPDATED: Enhanced company info
         company=landing_page.company.dict() if landing_page.company else None,
-        
-        # NEW: Company about
         company_about=landing_page.company_about.dict() if landing_page.company_about else None,
-        
-        # NEW: Live notifications
         live_notifications=landing_page.live_notifications.dict() if landing_page.live_notifications else None,
-        
+        footer=landing_page.footer.dict() if landing_page.footer else None,
         seo=landing_page.seo.dict() if landing_page.seo else None,
         hero=landing_page.hero.dict() if landing_page.hero else None,
-        
-        # UPDATED: Packages with custom packages
         packages=landing_page.packages.dict() if landing_page.packages else None,
-        
+        why_choose_us=landing_page.why_choose_us.dict() if landing_page.why_choose_us else None,  # NEW
         attractions=landing_page.attractions.dict() if landing_page.attractions else None,
         gallery=landing_page.gallery.dict() if landing_page.gallery else None,
         testimonials=landing_page.testimonials.dict() if landing_page.testimonials else None,
         faqs=landing_page.faqs.dict() if landing_page.faqs else None,
         travel_guidelines=landing_page.travel_guidelines.dict() if landing_page.travel_guidelines else None,
-        offers=landing_page.offers.dict() if landing_page.offers else None
+        custom_sections=landing_page.custom_sections.dict() if landing_page.custom_sections else None,  # NEW
+        offers=landing_page.offers.dict() if landing_page.offers else None,
+        section_order=landing_page.section_order.dict() if landing_page.section_order else None  # NEW
     )
     
     db.add(db_landing_page)
@@ -155,7 +155,7 @@ def get_landing_page(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Get a specific landing page by ID"""
+    """Get a specific landing page by ID with all sections"""
     user_id, domain_name = get_user_id_and_domain(request)
     
     landing_page = db.query(LandingPage).filter(
@@ -176,7 +176,10 @@ def get_landing_page_by_slug(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Get landing page by slug (Public)"""
+    """
+    Get landing page by slug (Public endpoint for frontend display)
+    Returns all sections in order specified by section_order
+    """
     domain_name = request.headers.get("x-domain-name", "default")
     
     landing_page = db.query(LandingPage).filter(
@@ -203,7 +206,12 @@ def update_landing_page(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Update landing page - supports all fields except theme_colors (hidden)"""
+    """
+    Update landing page - supports all fields including:
+    - Why Choose Us section
+    - Custom sections
+    - Section ordering
+    """
     user_id, domain_name = get_user_id_and_domain(request)
     
     db_landing_page = db.query(LandingPage).filter(
@@ -215,15 +223,16 @@ def update_landing_page(
     if not db_landing_page:
         raise HTTPException(status_code=404, detail="Landing page not found")
     
-    # Update all fields (theme_colors excluded)
+    # Update all fields
     update_data = landing_page_update.dict(exclude_unset=True)
     
     for field, value in update_data.items():
         if hasattr(db_landing_page, field):
             # Convert Pydantic models to dict for JSON fields
-            if field in ['company', 'company_about', 'live_notifications',
-                        'seo', 'hero', 'packages', 'attractions', 'gallery', 
-                        'testimonials', 'faqs', 'travel_guidelines', 'offers']:
+            if field in ['company', 'company_about', 'live_notifications', 'footer',
+                        'seo', 'hero', 'packages', 'why_choose_us', 'attractions', 
+                        'gallery', 'testimonials', 'faqs', 'travel_guidelines', 
+                        'custom_sections', 'offers', 'section_order']:
                 if value is not None:
                     value = value.dict() if hasattr(value, 'dict') else value
             setattr(db_landing_page, field, value)
@@ -244,7 +253,7 @@ def delete_landing_page(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Soft delete"""
+    """Soft delete landing page"""
     user_id, domain_name = get_user_id_and_domain(request)
     
     db_landing_page = db.query(LandingPage).filter(

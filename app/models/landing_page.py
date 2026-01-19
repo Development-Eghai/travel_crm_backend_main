@@ -3,61 +3,154 @@ from sqlalchemy.sql import func
 from core.database import Base
 
 class LandingPage(Base):
+    """
+    Landing Page Table - Complete Structure
+    
+    UPDATED FEATURES:
+    - Custom trips now have badge field
+    - Highlights renamed to itinerary in custom trips
+    - NEW: Why Choose Us section
+    - NEW: Custom Sections (Format 1 & Format 2)
+    - NEW: Section ordering for rearranging sections
+    
+    All sections stored as JSON for maximum flexibility
+    """
     __tablename__ = "landing_pages"
     
-    # Primary Key
+    # ===== PRIMARY KEY =====
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     
-    # Basic Information
-    page_name = Column(String(255), nullable=False)
-    slug = Column(String(255), unique=True, nullable=False, index=True)
-    template = Column(String(50), default='template-one')
-    is_active = Column(Boolean, default=True, index=True)
+    # ===== BASIC INFORMATION =====
+    page_name = Column(String(255), nullable=False, comment="Landing page name")
+    slug = Column(String(255), unique=True, nullable=False, index=True, comment="URL slug")
+    template = Column(String(50), default='template-one', comment="Template variant")
+    is_active = Column(Boolean, default=True, index=True, comment="Published status")
     
-    # Multi-tenancy
-    user_id = Column(Integer, nullable=False, index=True)
-    domain_name = Column(String(255), nullable=False, index=True)
+    # ===== MULTI-TENANCY =====
+    user_id = Column(Integer, nullable=False, index=True, comment="Owner user ID")
+    domain_name = Column(String(255), nullable=False, index=True, comment="Domain identifier")
     
-    # ===== JSON Data Columns =====
+    # ===== JSON DATA COLUMNS =====
     
-    # NEW: Global theme colors
-    theme_colors = Column(JSON)
+    # Theme and branding
+    theme_colors = Column(JSON, comment="Color scheme configuration")
+    company = Column(JSON, comment="Company information: name, logo, contacts, addresses")
+    company_about = Column(JSON, comment="About us: heading, description, team members")
     
-    # UPDATED: Enhanced company information (multiple emails, phones, addresses)
-    company = Column(JSON)
+    # Dynamic features
+    live_notifications = Column(JSON, comment="Social proof booking notifications")
+    footer = Column(JSON, comment="Footer columns, copyright, keywords")
     
-    # NEW: Company about section (logo, team, highlights)
-    company_about = Column(JSON)
+    # SEO and hero
+    seo = Column(JSON, comment="Meta tags, OG tags, SEO metadata")
+    hero = Column(JSON, comment="Hero section: title, CTAs, background media")
     
-    # NEW: Live booking notifications (Social Proof Widget)
-    live_notifications = Column(JSON)
+    # Main content sections
+    packages = Column(JSON, comment="""
+        Tour packages with custom trips
+        Structure:
+        {
+            "custom_trips": [
+                {
+                    "trip_title": "...",
+                    "badge": "Popular",  // NEW
+                    "itinerary": "<p>Day 1: ...</p>",  // RENAMED from highlights
+                    "pricing": [...],
+                    "inclusions": {...}
+                }
+            ]
+        }
+    """)
     
-    # Existing JSON columns
-    seo = Column(JSON)
-    hero = Column(JSON)
+    why_choose_us = Column(JSON, comment="""
+        NEW: Why Choose Us section
+        Structure:
+        {
+            "section_title": "Why Choose Us",
+            "section_subtitle": "...",
+            "items": [
+                {
+                    "title": "Best Prices",
+                    "icon": "dollar-sign",
+                    "image": "url",
+                    "description": "..."
+                }
+            ],
+            "show_section": true
+        }
+    """)
     
-    # UPDATED: Packages (now includes custom_packages array)
-    packages = Column(JSON)
+    attractions = Column(JSON, comment="Top attractions with images")
+    gallery = Column(JSON, comment="Photo and video gallery")
+    testimonials = Column(JSON, comment="Customer testimonials with ratings")
+    faqs = Column(JSON, comment="Frequently asked questions")
+    travel_guidelines = Column(JSON, comment="Travel guidelines and tips")
     
-    attractions = Column(JSON)
-    gallery = Column(JSON)
-    testimonials = Column(JSON)
-    faqs = Column(JSON)
-    travel_guidelines = Column(JSON)
-    offers = Column(JSON)
+    custom_sections = Column(JSON, comment="""
+        NEW: User-created custom sections
+        Structure:
+        {
+            "sections": [
+                {
+                    "id": "custom_1",
+                    "order": 1,
+                    "content": {
+                        "format_type": "format_1",
+                        "section_title": "...",
+                        "section_subtitle": "...",
+                        "description": "<p>Rich text</p>"
+                    },
+                    "show_section": true
+                },
+                {
+                    "id": "custom_2",
+                    "order": 2,
+                    "content": {
+                        "format_type": "format_2",
+                        "section_title": "...",
+                        "items": [
+                            {
+                                "title": "...",
+                                "icon": "...",
+                                "image": "...",
+                                "description": "..."
+                            }
+                        ]
+                    },
+                    "show_section": true
+                }
+            ]
+        }
+    """)
     
-    # Analytics
-    views = Column(Integer, default=0)
-    leads = Column(Integer, default=0)
+    offers = Column(JSON, comment="Promotional offers, banners, popups")
     
-    # Soft Delete
-    is_deleted = Column(Boolean, default=False, index=True)
+    section_order = Column(JSON, comment="""
+        NEW: Section display order configuration
+        Structure:
+        {
+            "sections": [
+                {"section_name": "hero", "order": 1, "visible": true},
+                {"section_name": "packages", "order": 2, "visible": true},
+                {"section_name": "why_choose_us", "order": 3, "visible": true},
+                {"section_name": "custom_section_1", "order": 4, "visible": true},
+                {"section_name": "attractions", "order": 5, "visible": true}
+            ]
+        }
+    """)
     
-    # Timestamps
+    # ===== ANALYTICS =====
+    views = Column(Integer, default=0, comment="Total page views")
+    leads = Column(Integer, default=0, comment="Total lead conversions")
+    
+    # ===== SOFT DELETE =====
+    is_deleted = Column(Boolean, default=False, index=True, comment="Soft delete flag")
+    
+    # ===== TIMESTAMPS =====
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
-    # Composite Index for better query performance
+    # ===== INDEXES =====
     __table_args__ = (
         Index('idx_user_domain_deleted', 'user_id', 'domain_name', 'is_deleted'),
     )
