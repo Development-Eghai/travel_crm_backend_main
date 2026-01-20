@@ -2,16 +2,17 @@ from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime, JSON, I
 from sqlalchemy.sql import func
 from core.database import Base
 
+
 class LandingPage(Base):
     """
-    Landing Page Table - Complete Structure
+    Landing Page Model - Complete Structure
     
-    UPDATED FEATURES:
-    - Custom trips now have badge field
-    - Highlights renamed to itinerary in custom trips
-    - NEW: Why Choose Us section
-    - NEW: Custom Sections (Format 1 & Format 2)
-    - NEW: Section ordering for rearranging sections
+    FEATURES:
+    - Custom trips with badge support
+    - Itinerary field for day-wise details
+    - Why Choose Us section
+    - Custom sections (Format 1 & Format 2)
+    - Section ordering (optional - hidden from basic UI)
     
     All sections stored as JSON for maximum flexibility
     """
@@ -53,8 +54,8 @@ class LandingPage(Base):
             "custom_trips": [
                 {
                     "trip_title": "...",
-                    "badge": "Popular",  // NEW
-                    "itinerary": "<p>Day 1: ...</p>",  // RENAMED from highlights
+                    "badge": "Popular",
+                    "itinerary": "<p>Day 1: ...</p>",
                     "pricing": [...],
                     "inclusions": {...}
                 }
@@ -63,7 +64,7 @@ class LandingPage(Base):
     """)
     
     why_choose_us = Column(JSON, comment="""
-        NEW: Why Choose Us section
+        Why Choose Us section
         Structure:
         {
             "section_title": "Why Choose Us",
@@ -87,7 +88,7 @@ class LandingPage(Base):
     travel_guidelines = Column(JSON, comment="Travel guidelines and tips")
     
     custom_sections = Column(JSON, comment="""
-        NEW: User-created custom sections
+        User-created custom sections
         Structure:
         {
             "sections": [
@@ -97,25 +98,7 @@ class LandingPage(Base):
                     "content": {
                         "format_type": "format_1",
                         "section_title": "...",
-                        "section_subtitle": "...",
                         "description": "<p>Rich text</p>"
-                    },
-                    "show_section": true
-                },
-                {
-                    "id": "custom_2",
-                    "order": 2,
-                    "content": {
-                        "format_type": "format_2",
-                        "section_title": "...",
-                        "items": [
-                            {
-                                "title": "...",
-                                "icon": "...",
-                                "image": "...",
-                                "description": "..."
-                            }
-                        ]
                     },
                     "show_section": true
                 }
@@ -125,16 +108,13 @@ class LandingPage(Base):
     
     offers = Column(JSON, comment="Promotional offers, banners, popups")
     
-    section_order = Column(JSON, comment="""
-        NEW: Section display order configuration
+    section_order = Column(JSON, nullable=True, comment="""
+        [OPTIONAL/HIDDEN] Section display order configuration
+        Only used when drag-drop reordering is needed
         Structure:
         {
             "sections": [
-                {"section_name": "hero", "order": 1, "visible": true},
-                {"section_name": "packages", "order": 2, "visible": true},
-                {"section_name": "why_choose_us", "order": 3, "visible": true},
-                {"section_name": "custom_section_1", "order": 4, "visible": true},
-                {"section_name": "attractions", "order": 5, "visible": true}
+                {"section_name": "hero", "order": 1, "visible": true}
             ]
         }
     """)

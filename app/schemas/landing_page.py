@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, HttpUrl
-from typing import Optional, List, Dict, Any, Literal
-from datetime import datetime, date
+from typing import Optional, List, Dict, Any, Literal, Union
+from datetime import datetime
+
 
 # ============= LANDING PAGE SUB-SCHEMAS =============
 
@@ -11,6 +12,7 @@ class BookingNotification(BaseModel):
     location: str
     destination: str
     time: str
+
 
 class LiveBookingNotifications(BaseModel):
     """Live booking notification popups (Social Proof)"""
@@ -28,6 +30,7 @@ class Highlight(BaseModel):
     text: str
     icon: Optional[str] = "star"
 
+
 class TeamMember(BaseModel):
     """Team member information"""
     name: str
@@ -35,6 +38,7 @@ class TeamMember(BaseModel):
     image: str
     bio: Optional[str] = ""
     social_links: Optional[Dict[str, str]] = {}
+
 
 class CompanyAbout(BaseModel):
     """Complete About Us section"""
@@ -55,6 +59,7 @@ class ContactInfo(BaseModel):
     value: str
     label: Optional[str] = ""
 
+
 class AddressInfo(BaseModel):
     """Address with optional map link"""
     label: Optional[str] = "Head Office"
@@ -66,11 +71,13 @@ class AddressInfo(BaseModel):
     map_link: Optional[str] = ""
     is_primary: bool = False
 
+
 class SocialMediaLink(BaseModel):
     """Social media link"""
     platform: str
     url: str
     icon: Optional[str] = ""
+
 
 class Company(BaseModel):
     """Enhanced company information"""
@@ -84,7 +91,7 @@ class Company(BaseModel):
     business_hours: Optional[str] = ""
 
 
-# ===== 4. TRIP PRICING (Multiple prices with currency support) =====
+# ===== 4. TRIP PRICING =====
 class TripPricing(BaseModel):
     """Individual price entry with label and currency"""
     price: float
@@ -92,6 +99,7 @@ class TripPricing(BaseModel):
     currency: str = "INR"
     is_offer: bool = False
     offer_price: Optional[float] = None
+
 
 class TripInclusions(BaseModel):
     """Trip inclusions with icon checkboxes"""
@@ -103,22 +111,16 @@ class TripInclusions(BaseModel):
     other_inclusions: str = ""
 
 
-# ===== 5. UPDATED: CUSTOM TRIP CREATION =====
+# ===== 5. CUSTOM TRIP CREATION =====
 class CustomTrip(BaseModel):
-    """
-    Custom trip created directly in landing page
-    
-    UPDATED:
-    - Added badge field
-    - Renamed highlights to itinerary (keeping rich text format)
-    """
+    """Custom trip created directly in landing page"""
     trip_title: str
     trip_images: List[str] = []
-    badge: Optional[str] = ""  # NEW: Badge like "Popular", "Best Seller", "Hot Deal"
+    badge: Optional[str] = ""
     inclusions: TripInclusions = TripInclusions()
-    itinerary: str = ""  # RENAMED from highlights - Rich text editor content for day-wise itinerary
+    itinerary: str = ""
     pricing: List[TripPricing] = []
-    additional_info: Optional[str] = ""  # Optional additional information
+    additional_info: Optional[str] = ""
 
 
 # ===== 6. CUSTOM PACKAGES =====
@@ -132,141 +134,7 @@ class CustomPackage(BaseModel):
     discount_text: Optional[str] = ""
 
 
-# ===== 7. PACKAGES SECTION =====
-class Packages(BaseModel):
-    """Packages section with custom packages and custom trips"""
-    section_title: str = "Tour Packages"
-    section_subtitle: str = "Explore our hand-picked packages"
-    selected_trips: List['SelectedTrip'] = []
-    custom_trips: List[CustomTrip] = []
-    custom_packages: List[CustomPackage] = []
-    show_section: bool = True
-
-
-# ===== 8. NEW: WHY CHOOSE US SECTION =====
-class WhyChooseUsItem(BaseModel):
-    """Individual reason/benefit item"""
-    title: str
-    image: Optional[str] = ""  # Image URL
-    icon: Optional[str] = ""   # Icon name (can use lucide-react icons)
-    description: str
-
-class WhyChooseUs(BaseModel):
-    """
-    Why Choose Us section
-    Highlights company benefits, USPs, and competitive advantages
-    """
-    section_title: str = "Why Choose Us"
-    section_subtitle: str = "What makes us different"
-    items: List[WhyChooseUsItem] = []
-    show_section: bool = True
-
-
-# ===== 9. NEW: CUSTOM SECTIONS =====
-class CustomSectionFormat1(BaseModel):
-    """
-    Format 1: Simple text-based section
-    Section with title, subtitle, and rich text description
-    """
-    format_type: Literal["format_1"] = "format_1"
-    section_title: str
-    section_subtitle: str = ""
-    description: str  # Rich text editor content
-
-class CustomSectionItemFormat2(BaseModel):
-    """Individual item for Format 2"""
-    title: str
-    image: Optional[str] = ""
-    icon: Optional[str] = ""
-    description: str
-
-class CustomSectionFormat2(BaseModel):
-    """
-    Format 2: Item-based section
-    Section with title, subtitle, and multiple items
-    """
-    format_type: Literal["format_2"] = "format_2"
-    section_title: str
-    section_subtitle: str = ""
-    items: List[CustomSectionItemFormat2] = []
-
-# Union type for custom sections
-from typing import Union
-CustomSectionContent = Union[CustomSectionFormat1, CustomSectionFormat2]
-
-class CustomSection(BaseModel):
-    """
-    Custom section with ordering support
-    Can be either Format 1 (text) or Format 2 (items)
-    """
-    id: str  # Unique identifier for reordering
-    order: int = Field(ge=1, description="Display order")
-    content: CustomSectionContent  # Either Format1 or Format2
-    show_section: bool = True
-
-class CustomSections(BaseModel):
-    """Container for all custom sections with ordering"""
-    sections: List[CustomSection] = []
-
-
-# ===== 10. FOOTER SCHEMAS =====
-class FooterColumn(BaseModel):
-    """Individual footer column with rich text content"""
-    title: str
-    content: str
-    order: int = Field(ge=1)
-    status: str = "active"
-
-class FooterSettings(BaseModel):
-    """Footer-wide settings"""
-    copyright_text: str = ""
-    keywords: str = ""
-    status: str = "active"
-
-class Footer(BaseModel):
-    """Complete footer structure"""
-    columns: List[FooterColumn] = []
-    settings: FooterSettings = FooterSettings()
-
-
-# ===== 11. SECTION ORDER MANAGEMENT =====
-class SectionOrder(BaseModel):
-    """
-    Defines the display order of all sections on the landing page
-    Allows users to rearrange sections via drag & drop
-    """
-    section_name: str  # e.g., "hero", "packages", "why_choose_us", "custom_section_1"
-    order: int = Field(ge=1)
-    visible: bool = True
-
-class SectionOrdering(BaseModel):
-    """Container for section ordering configuration"""
-    sections: List[SectionOrder] = []
-
-
-# ===== EXISTING SCHEMAS =====
-class SEO(BaseModel):
-    meta_title: Optional[str] = ""
-    meta_description: Optional[str] = ""
-    meta_tags: Optional[str] = ""
-    og_image: Optional[str] = ""
-
-class CTAButton(BaseModel):
-    text: str = "Book Now"
-    link: str = ""
-    style: Optional[str] = "primary"
-
-class Hero(BaseModel):
-    title: str
-    subtitle: Optional[str] = ""
-    description: Optional[str] = ""
-    cta_button_1: CTAButton = CTAButton()
-    cta_button_2: CTAButton = CTAButton()
-    background_type: Optional[str] = "slider"
-    background_images: List[str] = []
-    background_videos: List[str] = []
-    overlay_opacity: Optional[float] = 0.4
-
+# ===== 7. SELECTED TRIP =====
 class SelectedTrip(BaseModel):
     """Selected trip from existing database"""
     trip_id: int
@@ -281,24 +149,103 @@ class SelectedTrip(BaseModel):
     pricing_model: Optional[str] = ""
     image: Optional[str] = ""
 
+
+# ===== 8. PACKAGES SECTION =====
+class Packages(BaseModel):
+    """Packages section with custom packages and custom trips"""
+    section_title: str = "Tour Packages"
+    section_subtitle: str = "Explore our hand-picked packages"
+    selected_trips: List[SelectedTrip] = []
+    custom_trips: List[CustomTrip] = []
+    custom_packages: List[CustomPackage] = []
+    show_section: bool = True
+
+
+# ===== 9. WHY CHOOSE US SECTION =====
+class WhyChooseUsItem(BaseModel):
+    """Individual reason/benefit item"""
+    title: str
+    image: Optional[str] = ""
+    icon: Optional[str] = ""
+    description: str
+
+
+class WhyChooseUs(BaseModel):
+    """Why Choose Us section highlighting company benefits and USPs"""
+    section_title: str = "Why Choose Us"
+    section_subtitle: str = "What makes us different"
+    items: List[WhyChooseUsItem] = []
+    show_section: bool = True
+
+
+# ===== 10. CUSTOM SECTIONS =====
+class CustomSectionFormat1(BaseModel):
+    """Format 1: Simple text-based section"""
+    format_type: Literal["format_1"] = "format_1"
+    section_title: str
+    section_subtitle: str = ""
+    description: str
+
+
+class CustomSectionItemFormat2(BaseModel):
+    """Individual item for Format 2"""
+    title: str
+    image: Optional[str] = ""
+    icon: Optional[str] = ""
+    description: str
+
+
+class CustomSectionFormat2(BaseModel):
+    """Format 2: Item-based section"""
+    format_type: Literal["format_2"] = "format_2"
+    section_title: str
+    section_subtitle: str = ""
+    items: List[CustomSectionItemFormat2] = []
+
+
+CustomSectionContent = Union[CustomSectionFormat1, CustomSectionFormat2]
+
+
+class CustomSection(BaseModel):
+    """Custom section with ordering support"""
+    id: str
+    order: int = Field(ge=1, description="Display order")
+    content: CustomSectionContent
+    show_section: bool = True
+
+
+class CustomSections(BaseModel):
+    """Container for all custom sections"""
+    sections: List[CustomSection] = []
+
+
+# ===== 11. ATTRACTIONS =====
 class AttractionItem(BaseModel):
+    """Individual attraction"""
     title: str
     image: str
     description: str
 
+
 class Attractions(BaseModel):
+    """Top attractions section"""
     section_title: str = "Top Attractions"
     section_subtitle: str = "Must-visit places"
     items: List[AttractionItem] = []
     show_section: bool = True
 
+
+# ===== 12. GALLERY =====
 class Gallery(BaseModel):
+    """Photo and video gallery"""
     section_title: str = "Photo Gallery"
     section_subtitle: str = "Captured moments"
     images: List[str] = []
     videos: List[str] = []
     show_section: bool = True
 
+
+# ===== 13. TESTIMONIALS =====
 class TestimonialItem(BaseModel):
     """Testimonial item"""
     name: str
@@ -308,40 +255,109 @@ class TestimonialItem(BaseModel):
     image: Optional[str] = ""
     date: str
 
+
 class Testimonials(BaseModel):
+    """Testimonials section"""
     section_title: str = "What Our Travelers Say"
     section_subtitle: str = "Real experiences"
     items: List[TestimonialItem] = []
     show_section: bool = True
 
+
+# ===== 14. FAQs =====
 class FAQItem(BaseModel):
+    """FAQ item"""
     question: str
     answer: str
 
+
 class FAQs(BaseModel):
+    """Frequently asked questions section"""
     section_title: str = "Frequently Asked Questions"
     section_subtitle: str = "Everything you need to know"
     items: List[FAQItem] = []
     show_section: bool = True
 
+
+# ===== 15. TRAVEL GUIDELINES =====
 class TravelGuidelines(BaseModel):
+    """Travel guidelines section"""
     section_title: str = "Travel Guidelines"
     section_subtitle: str = "Important information"
     description: str = ""
     show_section: bool = True
 
+
+# ===== 16. FOOTER =====
+class FooterColumn(BaseModel):
+    """Individual footer column"""
+    title: str
+    content: str
+    order: int = Field(ge=1)
+    status: str = "active"
+
+
+class FooterSettings(BaseModel):
+    """Footer settings"""
+    copyright_text: str = ""
+    keywords: str = ""
+    status: str = "active"
+
+
+class Footer(BaseModel):
+    """Complete footer structure"""
+    columns: List[FooterColumn] = []
+    settings: FooterSettings = FooterSettings()
+
+
+# ===== 17. SEO =====
+class SEO(BaseModel):
+    """SEO metadata"""
+    meta_title: Optional[str] = ""
+    meta_description: Optional[str] = ""
+    meta_tags: Optional[str] = ""
+    og_image: Optional[str] = ""
+
+
+# ===== 18. HERO SECTION =====
+class CTAButton(BaseModel):
+    """Call-to-action button"""
+    text: str = "Book Now"
+    link: str = ""
+    style: Optional[str] = "primary"
+
+
+class Hero(BaseModel):
+    """Hero section"""
+    title: str
+    subtitle: Optional[str] = ""
+    description: Optional[str] = ""
+    cta_button_1: CTAButton = CTAButton()
+    cta_button_2: CTAButton = CTAButton()
+    background_type: Optional[str] = "slider"
+    background_images: List[str] = []
+    background_videos: List[str] = []
+    overlay_opacity: Optional[float] = 0.4
+
+
+# ===== 19. OFFERS & PROMOTIONS =====
 class BannerConfig(BaseModel):
+    """Banner configuration"""
     enabled: bool = False
     text: str = ""
     background_color: Optional[str] = ""
     text_color: Optional[str] = ""
 
+
 class MidSection(BaseModel):
+    """Mid-page promotional section"""
     enabled: bool = False
     type: str = "image"
     media_urls: List[str] = []
 
+
 class PopupConfig(BaseModel):
+    """Popup configuration"""
     enabled: bool = False
     title: str = ""
     description: Optional[str] = ""
@@ -349,12 +365,16 @@ class PopupConfig(BaseModel):
     cta_text: Optional[str] = "Get Offer"
     cta_link: Optional[str] = ""
 
+
 class Popups(BaseModel):
+    """Popup configurations"""
     entry: PopupConfig = PopupConfig()
     exit: PopupConfig = PopupConfig()
     idle: PopupConfig = PopupConfig()
 
+
 class Offers(BaseModel):
+    """Promotional offers configuration"""
     start_date: str = ""
     end_date: str = ""
     header: BannerConfig = BannerConfig()
@@ -363,16 +383,30 @@ class Offers(BaseModel):
     popups: Popups = Popups()
 
 
+# ===== 20. SECTION ORDERING (OPTIONAL/HIDDEN) =====
+class SectionOrder(BaseModel):
+    """Individual section order entry"""
+    section_name: str
+    order: int = Field(ge=1)
+    visible: bool = True
+
+
+class SectionOrdering(BaseModel):
+    """Section ordering configuration - OPTIONAL"""
+    sections: List[SectionOrder] = []
+
+
 # ============= MAIN LANDING PAGE SCHEMAS =============
+
 class LandingPageBase(BaseModel):
     """
     Complete landing page structure with all sections
     
-    NEW FEATURES:
+    FEATURES:
     - Why Choose Us section
     - Custom Sections (Format 1 & Format 2)
-    - Section ordering/reordering
     - Updated custom trips with badge and itinerary
+    - Section ordering is OPTIONAL
     """
     page_name: str
     slug: str
@@ -391,26 +425,30 @@ class LandingPageBase(BaseModel):
     
     # Main content sections
     packages: Optional[Packages] = Packages()
-    why_choose_us: Optional[WhyChooseUs] = WhyChooseUs()  # NEW
+    why_choose_us: Optional[WhyChooseUs] = WhyChooseUs()
     attractions: Optional[Attractions] = Attractions()
     gallery: Optional[Gallery] = Gallery()
     testimonials: Optional[Testimonials] = Testimonials()
     faqs: Optional[FAQs] = FAQs()
     travel_guidelines: Optional[TravelGuidelines] = TravelGuidelines()
     
-    # NEW: Custom sections
+    # Custom sections
     custom_sections: Optional[CustomSections] = CustomSections()
     
     # Offers and promotions
     offers: Optional[Offers] = Offers()
     
-    # NEW: Section ordering
-    section_order: Optional[SectionOrdering] = SectionOrdering()
+    # Section ordering (OPTIONAL - hidden from basic UI)
+    section_order: Optional[SectionOrdering] = None
+
 
 class LandingPageCreate(LandingPageBase):
+    """Schema for creating a landing page"""
     pass
 
+
 class LandingPageUpdate(BaseModel):
+    """Schema for updating a landing page"""
     page_name: Optional[str] = None
     slug: Optional[str] = None
     template: Optional[str] = None
@@ -422,17 +460,19 @@ class LandingPageUpdate(BaseModel):
     seo: Optional[SEO] = None
     hero: Optional[Hero] = None
     packages: Optional[Packages] = None
-    why_choose_us: Optional[WhyChooseUs] = None  # NEW
+    why_choose_us: Optional[WhyChooseUs] = None
     attractions: Optional[Attractions] = None
     gallery: Optional[Gallery] = None
     testimonials: Optional[Testimonials] = None
     faqs: Optional[FAQs] = None
     travel_guidelines: Optional[TravelGuidelines] = None
-    custom_sections: Optional[CustomSections] = None  # NEW
+    custom_sections: Optional[CustomSections] = None
     offers: Optional[Offers] = None
-    section_order: Optional[SectionOrdering] = None  # NEW
+    section_order: Optional[SectionOrdering] = None
+
 
 class LandingPageResponse(LandingPageBase):
+    """Response schema for landing page"""
     id: int
     user_id: int
     domain_name: str
@@ -444,7 +484,9 @@ class LandingPageResponse(LandingPageBase):
     class Config:
         from_attributes = True
 
+
 class LandingPageList(BaseModel):
+    """Landing page list item"""
     id: int
     page_name: str
     slug: str
@@ -458,12 +500,15 @@ class LandingPageList(BaseModel):
     class Config:
         from_attributes = True
 
+
 class PaginatedLandingPages(BaseModel):
+    """Paginated landing pages response"""
     pages: List[LandingPageList]
     total: int
     page: int
     per_page: int
     total_pages: int
+
 
 # Rebuild to resolve forward references
 Packages.model_rebuild()
