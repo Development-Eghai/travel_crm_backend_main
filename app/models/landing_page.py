@@ -7,7 +7,8 @@ class LandingPage(Base):
     """
     Landing Page Model - Complete Structure
     
-    FEATURES:
+    NEW FEATURES:
+    - Custom Scripts for tracking/analytics (Google Analytics, Meta Pixel, etc.)
     - Custom trips with badge support
     - Itinerary field for day-wise details
     - Why Choose Us section
@@ -32,6 +33,24 @@ class LandingPage(Base):
     domain_name = Column(String(255), nullable=False, index=True, comment="Domain identifier")
     
     # ===== JSON DATA COLUMNS =====
+    
+    # NEW: Custom Scripts (Tracking & Analytics)
+    custom_scripts = Column(JSON, comment="""
+        Custom tracking scripts (Google Analytics, Meta Pixel, etc.)
+        Structure:
+        {
+            "scripts": [
+                {
+                    "id": "ga4_001",
+                    "name": "Google Analytics 4",
+                    "script_code": "<script>...</script>",
+                    "location": "head",
+                    "enabled": true,
+                    "order": 1
+                }
+            ]
+        }
+    """)
     
     # Theme and branding
     theme_colors = Column(JSON, comment="Color scheme configuration")

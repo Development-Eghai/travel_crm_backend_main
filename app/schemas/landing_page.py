@@ -5,7 +5,26 @@ from datetime import datetime
 
 # ============= LANDING PAGE SUB-SCHEMAS =============
 
-# ===== 1. LIVE BOOKING NOTIFICATIONS (Social Proof Widget) =====
+# ===== 1. CUSTOM SCRIPTS (Tracking & Analytics) =====
+class CustomScript(BaseModel):
+    """Individual custom script entry for tracking/analytics"""
+    id: str = Field(description="Unique identifier for this script")
+    name: str = Field(description="Script name (e.g., 'Google Analytics', 'Meta Pixel')")
+    script_code: str = Field(description="The actual script code to inject")
+    location: Literal["head", "body_start", "body_end"] = Field(
+        default="head",
+        description="Where to inject: head, body_start (after <body>), body_end (before </body>)"
+    )
+    enabled: bool = Field(default=True, description="Enable/disable this script")
+    order: int = Field(default=1, ge=1, description="Loading order (lower = loads first)")
+
+
+class CustomScripts(BaseModel):
+    """Container for all custom scripts"""
+    scripts: List[CustomScript] = []
+
+
+# ===== 2. LIVE BOOKING NOTIFICATIONS (Social Proof Widget) =====
 class BookingNotification(BaseModel):
     """Single booking notification entry"""
     name: str
@@ -24,7 +43,7 @@ class LiveBookingNotifications(BaseModel):
     show_on_mobile: bool = True
 
 
-# ===== 2. COMPANY ABOUT SECTION =====
+# ===== 3. COMPANY ABOUT SECTION =====
 class Highlight(BaseModel):
     """Individual highlight item with icon and text"""
     text: str
@@ -53,7 +72,7 @@ class CompanyAbout(BaseModel):
     show_section: bool = True
 
 
-# ===== 3. ENHANCED COMPANY INFO =====
+# ===== 4. ENHANCED COMPANY INFO =====
 class ContactInfo(BaseModel):
     """Single contact entry with value and label"""
     value: str
@@ -91,7 +110,7 @@ class Company(BaseModel):
     business_hours: Optional[str] = ""
 
 
-# ===== 4. TRIP PRICING =====
+# ===== 5. TRIP PRICING =====
 class TripPricing(BaseModel):
     """Individual price entry with label and currency"""
     price: float
@@ -111,7 +130,7 @@ class TripInclusions(BaseModel):
     other_inclusions: str = ""
 
 
-# ===== 5. CUSTOM TRIP CREATION =====
+# ===== 6. CUSTOM TRIP CREATION =====
 class CustomTrip(BaseModel):
     """Custom trip created directly in landing page"""
     trip_title: str
@@ -123,7 +142,7 @@ class CustomTrip(BaseModel):
     additional_info: Optional[str] = ""
 
 
-# ===== 6. CUSTOM PACKAGES =====
+# ===== 7. CUSTOM PACKAGES =====
 class CustomPackage(BaseModel):
     """Custom package grouping multiple trips or custom trips"""
     title: str
@@ -134,7 +153,7 @@ class CustomPackage(BaseModel):
     discount_text: Optional[str] = ""
 
 
-# ===== 7. SELECTED TRIP =====
+# ===== 8. SELECTED TRIP =====
 class SelectedTrip(BaseModel):
     """Selected trip from existing database"""
     trip_id: int
@@ -150,7 +169,7 @@ class SelectedTrip(BaseModel):
     image: Optional[str] = ""
 
 
-# ===== 8. PACKAGES SECTION =====
+# ===== 9. PACKAGES SECTION =====
 class Packages(BaseModel):
     """Packages section with custom packages and custom trips"""
     section_title: str = "Tour Packages"
@@ -161,7 +180,7 @@ class Packages(BaseModel):
     show_section: bool = True
 
 
-# ===== 9. WHY CHOOSE US SECTION =====
+# ===== 10. WHY CHOOSE US SECTION =====
 class WhyChooseUsItem(BaseModel):
     """Individual reason/benefit item"""
     title: str
@@ -178,7 +197,7 @@ class WhyChooseUs(BaseModel):
     show_section: bool = True
 
 
-# ===== 10. CUSTOM SECTIONS =====
+# ===== 11. CUSTOM SECTIONS =====
 class CustomSectionFormat1(BaseModel):
     """Format 1: Simple text-based section"""
     format_type: Literal["format_1"] = "format_1"
@@ -219,7 +238,7 @@ class CustomSections(BaseModel):
     sections: List[CustomSection] = []
 
 
-# ===== 11. ATTRACTIONS =====
+# ===== 12. ATTRACTIONS =====
 class AttractionItem(BaseModel):
     """Individual attraction"""
     title: str
@@ -235,7 +254,7 @@ class Attractions(BaseModel):
     show_section: bool = True
 
 
-# ===== 12. GALLERY =====
+# ===== 13. GALLERY =====
 class Gallery(BaseModel):
     """Photo and video gallery"""
     section_title: str = "Photo Gallery"
@@ -245,7 +264,7 @@ class Gallery(BaseModel):
     show_section: bool = True
 
 
-# ===== 13. TESTIMONIALS =====
+# ===== 14. TESTIMONIALS =====
 class TestimonialItem(BaseModel):
     """Testimonial item"""
     name: str
@@ -264,7 +283,7 @@ class Testimonials(BaseModel):
     show_section: bool = True
 
 
-# ===== 14. FAQs =====
+# ===== 15. FAQs =====
 class FAQItem(BaseModel):
     """FAQ item"""
     question: str
@@ -279,7 +298,7 @@ class FAQs(BaseModel):
     show_section: bool = True
 
 
-# ===== 15. TRAVEL GUIDELINES =====
+# ===== 16. TRAVEL GUIDELINES =====
 class TravelGuidelines(BaseModel):
     """Travel guidelines section"""
     section_title: str = "Travel Guidelines"
@@ -288,7 +307,7 @@ class TravelGuidelines(BaseModel):
     show_section: bool = True
 
 
-# ===== 16. FOOTER =====
+# ===== 17. FOOTER =====
 class FooterColumn(BaseModel):
     """Individual footer column"""
     title: str
@@ -310,7 +329,7 @@ class Footer(BaseModel):
     settings: FooterSettings = FooterSettings()
 
 
-# ===== 17. SEO =====
+# ===== 18. SEO =====
 class SEO(BaseModel):
     """SEO metadata"""
     meta_title: Optional[str] = ""
@@ -319,7 +338,7 @@ class SEO(BaseModel):
     og_image: Optional[str] = ""
 
 
-# ===== 18. HERO SECTION =====
+# ===== 19. HERO SECTION =====
 class CTAButton(BaseModel):
     """Call-to-action button"""
     text: str = "Book Now"
@@ -340,7 +359,7 @@ class Hero(BaseModel):
     overlay_opacity: Optional[float] = 0.4
 
 
-# ===== 19. OFFERS & PROMOTIONS =====
+# ===== 20. OFFERS & PROMOTIONS =====
 class BannerConfig(BaseModel):
     """Banner configuration"""
     enabled: bool = False
@@ -383,7 +402,7 @@ class Offers(BaseModel):
     popups: Popups = Popups()
 
 
-# ===== 20. SECTION ORDERING (OPTIONAL/HIDDEN) =====
+# ===== 21. SECTION ORDERING (OPTIONAL/HIDDEN) =====
 class SectionOrder(BaseModel):
     """Individual section order entry"""
     section_name: str
@@ -402,7 +421,8 @@ class LandingPageBase(BaseModel):
     """
     Complete landing page structure with all sections
     
-    FEATURES:
+    NEW FEATURES:
+    - Custom Scripts for tracking (Google Analytics, Meta Pixel, etc.)
     - Why Choose Us section
     - Custom Sections (Format 1 & Format 2)
     - Updated custom trips with badge and itinerary
@@ -412,6 +432,9 @@ class LandingPageBase(BaseModel):
     slug: str
     template: str = "template-one"
     is_active: bool = True
+    
+    # NEW: Custom Scripts (Tracking & Analytics)
+    custom_scripts: Optional[CustomScripts] = CustomScripts()
     
     # Core sections
     company: Optional[Company] = Company()
@@ -453,6 +476,7 @@ class LandingPageUpdate(BaseModel):
     slug: Optional[str] = None
     template: Optional[str] = None
     is_active: Optional[bool] = None
+    custom_scripts: Optional[CustomScripts] = None
     company: Optional[Company] = None
     company_about: Optional[CompanyAbout] = None
     live_notifications: Optional[LiveBookingNotifications] = None

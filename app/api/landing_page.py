@@ -63,10 +63,11 @@ def sanitize_landing_page(page):
     
     # Add JSON fields with defaults if they're None or malformed
     json_fields = [
-        'company', 'company_about', 'live_notifications', 'footer',
-        'seo', 'hero', 'packages', 'why_choose_us', 'attractions',
-        'gallery', 'testimonials', 'faqs', 'travel_guidelines',
-        'custom_sections', 'offers', 'section_order', 'theme_colors'
+        'custom_scripts', 'theme_colors', 'company', 'company_about', 
+        'live_notifications', 'footer', 'seo', 'hero', 'packages', 
+        'why_choose_us', 'attractions', 'gallery', 'testimonials', 
+        'faqs', 'travel_guidelines', 'custom_sections', 'offers', 
+        'section_order'
     ]
     
     for field in json_fields:
@@ -96,15 +97,7 @@ def get_all_landing_pages(
     is_active: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
-    """
-    Get all landing pages with pagination
-    
-    Query Parameters:
-    - page: Page number (default: 1)
-    - per_page: Items per page (default: 10, max: 100)
-    - search: Search by page name
-    - is_active: Filter by active status
-    """
+    """Get all landing pages with pagination"""
     try:
         user_id, domain_name = get_user_id_and_domain(request)
         
@@ -123,9 +116,7 @@ def get_all_landing_pages(
         offset = (page - 1) * per_page
         pages = query.order_by(LandingPage.created_at.desc()).offset(offset).limit(per_page).all()
         
-        # Sanitize pages before returning
         sanitized_pages = [sanitize_landing_page(p) for p in pages]
-        
         total_pages = math.ceil(total / per_page) if total > 0 else 1
         
         return {
@@ -140,10 +131,7 @@ def get_all_landing_pages(
         raise
     except Exception as e:
         logger.error(f"Error in get_all_landing_pages: {str(e)}\n{traceback.format_exc()}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @router.get("/all")
@@ -153,13 +141,7 @@ def get_all_landing_pages_no_pagination(
     is_active: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
-    """
-    Get ALL landing pages without pagination
-    
-    Query Parameters:
-    - search: Search by page name
-    - is_active: Filter by active status
-    """
+    """Get ALL landing pages without pagination"""
     try:
         user_id, domain_name = get_user_id_and_domain(request)
         
@@ -175,22 +157,15 @@ def get_all_landing_pages_no_pagination(
             query = query.filter(LandingPage.is_active == is_active)
         
         pages = query.order_by(LandingPage.created_at.desc()).all()
-        
-        # Sanitize pages before returning
         sanitized_pages = [sanitize_landing_page(p) for p in pages]
         
-        return {
-            "pages": sanitized_pages
-        }
+        return {"pages": sanitized_pages}
         
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error in get_all_landing_pages_no_pagination: {str(e)}\n{traceback.format_exc()}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @router.get("/{landing_page_id}")
@@ -199,11 +174,7 @@ def get_landing_page(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """
-    Get a specific landing page by ID with all sections
-    
-    Access: Authenticated users can only access their own pages
-    """
+    """Get a specific landing page by ID with all sections"""
     try:
         user_id, domain_name = get_user_id_and_domain(request)
         
@@ -231,12 +202,7 @@ def get_landing_page_by_slug(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """
-    Get landing page by slug (Public endpoint for frontend display)
-    
-    Returns: All sections in the order specified by section_order (if configured)
-    Side Effect: Increments view count automatically
-    """
+    """Get landing page by slug (Public endpoint for frontend display)"""
     try:
         domain_name = request.headers.get("x-domain-name", "default")
         
@@ -269,15 +235,7 @@ def create_landing_page(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """
-    Create a new landing page with all features
-    
-    Features:
-    - Custom trips with badge and itinerary
-    - Why Choose Us section
-    - Custom sections (Format 1 & Format 2)
-    - Optional section ordering (hidden from basic UI)
-    """
+    """Create a new landing page with all features including custom scripts"""
     try:
         user_id, domain_name = get_user_id_and_domain(request)
         
@@ -299,6 +257,8 @@ def create_landing_page(
             slug=landing_page.slug,
             template=landing_page.template,
             is_active=landing_page.is_active,
+            custom_scripts=convert_to_dict(landing_page.custom_scripts),
+            theme_colors=convert_to_dict(landing_page.theme_colors),
             company=convert_to_dict(landing_page.company),
             company_about=convert_to_dict(landing_page.company_about),
             live_notifications=convert_to_dict(landing_page.live_notifications),
@@ -342,16 +302,7 @@ def update_landing_page(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """
-    Update landing page - supports all fields
-    
-    Includes:
-    - Why Choose Us section
-    - Custom sections
-    - Section ordering (optional)
-    
-    Access: Authenticated users can only update their own pages
-    """
+    """Update landing page - supports all fields including custom scripts"""
     try:
         user_id, domain_name = get_user_id_and_domain(request)
         
@@ -368,10 +319,11 @@ def update_landing_page(
         update_data = landing_page_update.dict(exclude_unset=True)
         
         json_fields = {
-            'company', 'company_about', 'live_notifications', 'footer',
-            'seo', 'hero', 'packages', 'why_choose_us', 'attractions',
-            'gallery', 'testimonials', 'faqs', 'travel_guidelines',
-            'custom_sections', 'offers', 'section_order'
+            'custom_scripts', 'theme_colors', 'company', 'company_about', 
+            'live_notifications', 'footer', 'seo', 'hero', 'packages', 
+            'why_choose_us', 'attractions', 'gallery', 'testimonials', 
+            'faqs', 'travel_guidelines', 'custom_sections', 'offers', 
+            'section_order'
         }
         
         for field, value in update_data.items():
@@ -403,12 +355,7 @@ def delete_landing_page(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """
-    Soft delete landing page
-    
-    Note: Records are marked as deleted but not removed from database
-    Access: Authenticated users can only delete their own pages
-    """
+    """Soft delete landing page"""
     try:
         user_id, domain_name = get_user_id_and_domain(request)
         
@@ -440,12 +387,7 @@ def toggle_active_status(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """
-    Toggle active/inactive status of a landing page
-    
-    Inactive pages will not be displayed on the frontend
-    Access: Authenticated users can only toggle their own pages
-    """
+    """Toggle active/inactive status of a landing page"""
     try:
         user_id, domain_name = get_user_id_and_domain(request)
         
@@ -478,15 +420,8 @@ def toggle_active_status(
 
 
 @router.post("/{landing_page_id}/track-view")
-def track_view(
-    landing_page_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Track page view (Public endpoint)
-    
-    Increments view counter for analytics
-    """
+def track_view(landing_page_id: int, db: Session = Depends(get_db)):
+    """Track page view (Public endpoint)"""
     try:
         db_landing_page = db.query(LandingPage).filter(
             LandingPage.id == landing_page_id,
@@ -510,15 +445,8 @@ def track_view(
 
 
 @router.post("/{landing_page_id}/track-lead")
-def track_lead(
-    landing_page_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Track lead conversion (Public endpoint)
-    
-    Increments lead counter for analytics
-    """
+def track_lead(landing_page_id: int, db: Session = Depends(get_db)):
+    """Track lead conversion (Public endpoint)"""
     try:
         db_landing_page = db.query(LandingPage).filter(
             LandingPage.id == landing_page_id,
