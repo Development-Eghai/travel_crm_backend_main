@@ -37,6 +37,8 @@ class TripDetails(BaseModel):
     overview: str
     hero_image: Optional[str] = ""
     gallery_images: List[str] = []
+    inclusions: List[str] = []
+    exclusions: List[str] = []
     sections: List[TripSection] = []
     
     @field_validator('gallery_images', mode='before')
@@ -44,6 +46,13 @@ class TripDetails(BaseModel):
         """Remove empty strings from gallery_images"""
         if isinstance(v, list):
             return [url.strip() for url in v if url and url.strip()]
+        return v or []
+
+    @field_validator('inclusions', 'exclusions', mode='before')
+    def filter_empty_list_items(cls, v):
+        """Remove empty strings from inclusions/exclusions"""
+        if isinstance(v, list):
+            return [item.strip() for item in v if item and item.strip()]
         return v or []
 
 

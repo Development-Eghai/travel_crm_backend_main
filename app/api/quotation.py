@@ -76,7 +76,9 @@ def create_quotation(quotation_in: QuotationCreate, db: Session = Depends(get_db
             display_title=quotation_in.trip.display_title,
             overview=quotation_in.trip.overview,
             hero_image=hero_image,
-            gallery_images=gallery_images_str
+            gallery_images=gallery_images_str,
+            inclusions="|".join(quotation_in.trip.inclusions) if quotation_in.trip.inclusions else "",
+            exclusions="|".join(quotation_in.trip.exclusions) if quotation_in.trip.exclusions else ""
         ))
 
         for section in quotation_in.trip.sections:
@@ -233,6 +235,8 @@ def get_full_quotation(quotation_id: int, db: Session = Depends(get_db)):
                 "overview": quotation.trip.overview,
                 "hero_image": quotation.trip.hero_image,
                 "gallery_images": quotation.trip.gallery_images.split(",") if quotation.trip.gallery_images else [],
+                "inclusions": quotation.trip.inclusions.split("|") if quotation.trip.inclusions else [],
+                "exclusions": quotation.trip.exclusions.split("|") if quotation.trip.exclusions else [],
                 "sections": [
                     {"title": s.title, "content": s.content}
                     for s in db.query(QuotationTripSection)
@@ -348,7 +352,9 @@ def update_quotation(quotation_id: int, quotation_in: QuotationUpdate, db: Sessi
                 display_title=trip.display_title,
                 overview=trip.overview,
                 hero_image=hero_image,
-                gallery_images=gallery_images_str
+                gallery_images=gallery_images_str,
+                inclusions="|".join(trip.inclusions) if trip.inclusions else "",
+                exclusions="|".join(trip.exclusions) if trip.exclusions else ""
             ))
 
             for section in trip.sections:

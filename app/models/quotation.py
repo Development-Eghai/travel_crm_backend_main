@@ -66,6 +66,8 @@ class QuotationTrip(Base):
     overview = Column(Text)
     hero_image = Column(String)
     gallery_images = Column(Text)  # Comma-separated string
+    inclusions = Column(Text, nullable=True)  # Pipe-separated string
+    exclusions = Column(Text, nullable=True)  # Pipe-separated string
     is_deleted = Column(Boolean, default=False, nullable=False)
 
 
