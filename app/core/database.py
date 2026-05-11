@@ -32,7 +32,9 @@ try:
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,
-        connect_args={'connect_timeout': 10}
+        connect_args={
+            'connect_timeout': 10,
+            "get_server_public_key": True}
     )
 
 except Exception as e:
